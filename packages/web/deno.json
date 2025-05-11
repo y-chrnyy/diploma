@@ -1,0 +1,9 @@
+{
+  "imports": {
+    "@/": "./src/"
+  },
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "lib": ["deno.window", "DOM"]
+  }
+}

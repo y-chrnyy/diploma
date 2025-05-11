@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Document</title>
+  </head>
+  <body>
+    <button>login</button>
+  </body>
+  <script>
+    const btn = document.querySelector("button");
+
+    const login = async (e) => {
+      e.preventDefault();
+
+      const r = await fetch("http://127.0.0.1:3000/auth/signup", {
+        body: JSON.stringify({
+          authPayload: {
+            login: "test",
+            password: "test",
+          },
+        }),
+        method: "POST",
+        headers: {
+          "Content-type": "application/json",
+        },
+      });
+      console.log(r);
+      debugger;
+      const d = await r.text();
+
+      console.log(d);
+    };
+
+    btn.addEventListener("click", login);
+  </script>
+</html>
