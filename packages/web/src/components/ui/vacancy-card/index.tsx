@@ -23,12 +23,22 @@ export const VacancyCard = ({ vacancy, className, ...props }: ExtendedVacancyCar
   const isVacancyViewed = isViewed(vacancy.id);
   const navigate = useNavigate();
   const location = useLocation();
-  const { addToFavorites, isPending } = useFavoriteVacancy();
+  const { toggleFavorite, isPending } = useFavoriteVacancy();
   const { isFavorite } = useFavorites();
   const { login, isAdmin } = useUser();
   const { isBlocked, refreshBlockedVacancies } = useBlockedVacancies();
   const [blockLoading, setBlockLoading] = React.useState(false);
   const vacancyIsBlocked = isBlocked(vacancy.id);
+
+  if (!vacancy || !vacancy.name || !vacancy.employer) {
+    return (
+      <Card className={cn("p-6", className)} {...props}>
+        <div className="text-center text-muted-foreground">
+          Ошибка загрузки данных вакансии
+        </div>
+      </Card>
+    );
+  }
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -37,7 +47,7 @@ export const VacancyCard = ({ vacancy, className, ...props }: ExtendedVacancyCar
       navigate("/login", { state: { from: location.pathname } });
       return;
     }
-    addToFavorites({ vacancyId: vacancy.id });
+    toggleFavorite(vacancy.id);
   };
 
   const handleToggleBlock = async (e: React.MouseEvent) => {

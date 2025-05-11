@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn } from "npm:typeorm";
+import { Entity, Column, PrimaryGeneratedColumn } from "typeorm";
 
 export enum UserRole {
     REGULAR = "regular",
@@ -8,32 +8,35 @@ export enum UserRole {
 @Entity()
 export class User {
     @PrimaryGeneratedColumn()
-    id: number;
+    id!: number;
 
     @Column({
         "unique": true,
+        "type": "varchar"
     })
-    login: string
+    login: string;
 
-    @Column()
-    password: string
+    @Column({
+        "type": "varchar"
+    })
+    password: string;
 
     @Column({
         "nullable": true,
         "type": "text"
     })
-    refresh_token: string
+    refresh_token: string = '';
 
     @Column({
         type: "text",
         default: UserRole.REGULAR
     })
-    role: UserRole
+    role: UserRole;
 
     constructor(login: string, password: string) {
-        this.login = login
-        this.password = password
-        this.role = UserRole.REGULAR
+        this.login = login;
+        this.password = password;
+        this.role = UserRole.REGULAR;
     }
 
     getUserCredentials(): UserCredentials {

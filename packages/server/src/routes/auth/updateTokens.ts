@@ -1,4 +1,4 @@
-import type { RequestHandler } from "npm:express";
+import type { RequestHandler } from "express";
 import { HttpError } from "../../middleware/errorMiddleware.ts";
 import { verifyJwt } from "../../utils/jwt.ts";
 import { Database } from "../../models/index.ts";

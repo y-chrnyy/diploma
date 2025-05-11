@@ -1,4 +1,4 @@
-import { Request, Response } from "npm:express";
+import type { Request, Response, NextFunction } from "express";
 import type { ErrorResponse } from "../types/response.ts";
 
 export class HttpError extends Error {
@@ -6,13 +6,13 @@ export class HttpError extends Error {
     statusText: string
 
     constructor(status: number, statusText: string) {
-        super()
+        super(statusText);
         this.status = status
         this.statusText = statusText
     }
 }
 
-export const errorMiddleware = (error: HttpError, _req: Request, res: Response, _next: any) => {
+export const errorMiddleware = (error: HttpError, _req: Request, res: Response, _next: NextFunction) => {
     const statusCode = error.status || 500;
     const errorResponse: ErrorResponse = {
         status: 'error',

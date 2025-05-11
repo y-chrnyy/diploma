@@ -1,10 +1,10 @@
-import type { RequestHandler } from "npm:express";
+import type { RequestHandler } from "express";
 import { Database } from "../../models/index.ts";
 import { HhService } from "../../modules/hh.service.ts";
 import { HttpError } from "../../middleware/errorMiddleware.ts";
 import { UserRole } from "../../models/User.ts";
 import { BlockedVacancy } from "../../models/BlockedVacancy.ts";
-
+import { UserType } from "../../types/index.ts";
 const hhService = new HhService(Database);
 
 export const searchVacanciesHandler: RequestHandler = async (req, res) => {
@@ -13,6 +13,11 @@ export const searchVacanciesHandler: RequestHandler = async (req, res) => {
     const result = await hhService.searchVacancies({
       text: params.text as string,
       area: params.area as string | string[],
+      salary: params.salary ? parseInt(params.salary as string) : undefined,
+      experience: params.experience as string,
+      employment: params.employment as string[],
+      schedule: params.schedule as string[],
+      only_with_salary: params.only_with_salary === 'true',
       specialization: params.specialization as string | string[],
       industry: params.industry as string | string[],
       per_page: params.per_page ? parseInt(params.per_page as string) : undefined,
@@ -37,7 +42,7 @@ export const getVacancyHandler: RequestHandler = async (req, res) => {
     const isBlocked = await blockedRepo.findOneBy({ vacancyId: id });
 
     // Если вакансия заблокирована и пользователь не админ - возвращаем 403
-    if (isBlocked && req.user?.role !== UserRole.ADMIN) {
+    if (isBlocked && (req as unknown as Request & { user?: UserType }).user?.role !== UserRole.ADMIN) {
       res.status(403).json({ message: 'Vacancy is blocked' });
       return;
     }

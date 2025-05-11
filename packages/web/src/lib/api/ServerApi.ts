@@ -11,10 +11,10 @@ import type {
   ApiUserDetailsResponse,
   ApiBlockedVacanciesResponse,
   AuthPayload,
-  User,
   HhVacancySearchParams,
   HhVacancySearchResponse,
   HhVacancyFull,
+  UserRole,
 } from './types.ts';
 
 export class ServerApi {
@@ -35,57 +35,98 @@ export class ServerApi {
   }
 
   async login(payload: AuthPayload): Promise<ApiLoginResponse> {
-    const r = await this.api.post<User>('/auth/login', payload);
+    const r = await this.api.post<{
+      status: string,
+      code: number,
+      data: {
+        id: number,
+        login: string,
+        role: UserRole
+      }
+    }>('/auth/login', payload);
 
     return {
-      login: r.data.login,
-      id: r.data.id,
-      role: r.data.role,
+      login: r.data.data.login,
+      id: r.data.data.id,
+      role: r.data.data.role,
       status: r.status,
       message: r.statusText
     };
   }
 
   async signUp(payload: AuthPayload): Promise<ApiSignupResponse> {
-    const r =  await this.api.post<User>('/auth/signup', {
+    const r = await this.api.post<{
+      status: string,
+      code: number,
+      data: {
+        id: number,
+        login: string,
+        role: UserRole
+      }
+    }>('/auth/signup', {
       authPayload: payload
     });
 
     return {
-      login: r.data.login,
-      id: r.data.id,
-      role: r.data.role,
+      login: r.data.data.login,
+      id: r.data.data.id,
+      role: r.data.data.role,
       status: r.status,
       message: r.statusText
     };
   }
 
 
-  async deleteUser(): Promise<ApiResponse> {
-    const response = await this.api.delete('/auth/delete-user');
-    return {
-      status: response.status,
-      message: response.statusText
-    };
+  async deleteUser(userId?: number): Promise<ApiResponse> {
+    try {
+      const response = await this.api.delete('/auth/delete-user', {
+        data: userId ? { userId } : undefined
+      });
+      return {
+        status: response.status,
+        message: response.data?.message || response.statusText
+      };
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   }
 
   async updateTokens(): Promise<ApiLoginResponse> {
-    const r = await this.api.get<User>('/auth/update');
+    const r = await this.api.get<{
+      status: string,
+      code: number,
+      data: {
+        id: number,
+        login: string,
+        role: UserRole
+      }
+    }>('/auth/update');
     return {
-        login: r.data.login,
-        id: r.data.id,
-        role: r.data.role,
-        status: r.status,
-        message: r.statusText
+      login: r.data.data.login,
+      id: r.data.data.id,
+      role: r.data.data.role,
+      status: r.status,
+      message: r.statusText
     };
   }
 
   async loginWithJWT(): Promise<ApiLoginResponse> {
-    const r = await this.api.post<User>('/auth/login-jwt');
+    const r = await this.api.post<{
+      status: string,
+      code: number,
+      data: {
+        id: number,
+        login: string,
+        role: UserRole
+      }
+    }>('/auth/login-jwt');
     return {
-      login: r.data.login,
-      id: r.data.id,
-      role: r.data.role,
+      login: r.data.data.login,
+      id: r.data.data.id,
+      role: r.data.data.role,
       status: r.status,
       message: r.statusText
     };
@@ -111,41 +152,41 @@ export class ServerApi {
   }
 
   async addToFavorites(vacancyId: string): Promise<ApiFavoritesResponse> {
-    const response = await this.api.post<ApiFavoritesResponse>('/web/favorites/add', { vacancyId });
-    return response.data;
+    const response = await this.api.post<{data: ApiFavoritesResponse}>('/web/favorites/add', { vacancyId });
+    return response.data.data;
   }
 
   async getFavorites(): Promise<ApiFavoritesResponse> {
-    const response = await this.api.get<ApiFavoritesResponse>('/web/favorites');
-    return response.data;
+    const response = await this.api.get<{data: ApiFavoritesResponse}>('/web/favorites');
+    return response.data.data;
   }
 
   async removeFromFavorites(vacancyId: string): Promise<ApiFavoritesResponse> {
-    const response = await this.api.post<ApiFavoritesResponse>('/web/favorites/remove', { vacancyId });
-    return response.data;
+    const response = await this.api.post<{data: ApiFavoritesResponse}>('/web/favorites/remove', { vacancyId });
+    return response.data.data;
   }
 
   async addToViewed(vacancyId: string): Promise<ApiViewedResponse> {
-    const response = await this.api.post<ApiViewedResponse>('/web/viewed/add', { vacancyId });
-    return response.data;
+    const response = await this.api.post<{data: ApiViewedResponse}>('/web/viewed/add', { vacancyId });
+    return response.data.data;
   }
 
   async getViewed(): Promise<ApiViewedResponse> {
-    const response = await this.api.get<ApiViewedResponse>('/web/viewed');
-    return response.data;
+    const response = await this.api.get<{data: ApiViewedResponse}>('/web/viewed');
+    return response.data.data;
   }
 
   // Admin methods
   async getAllUsers(search?: string): Promise<ApiGetUsersResponse> {
-    const response = await this.api.get<ApiGetUsersResponse>('/admin/users', {
+    const response = await this.api.get<{data: ApiGetUsersResponse}>('/admin/users', {
       params: { search }
     });
-    return response.data;
+    return response.data.data;
   }
 
   async getUserDetails(userId: number): Promise<ApiUserDetailsResponse> {
-    const response = await this.api.get<ApiUserDetailsResponse>(`/admin/users/${userId}`);
-    return response.data;
+    const response = await this.api.get<{data: ApiUserDetailsResponse}>(`/admin/users/${userId}`);
+    return response.data.data;
   }
 
   async promoteToAdmin(userId: number): Promise<ApiResponse> {
@@ -157,13 +198,20 @@ export class ServerApi {
   }
 
   async deleteUserAsAdmin(userId: number): Promise<ApiResponse> {
-    const response = await this.api.delete('/admin/users/delete', { 
-      data: { userId } 
-    });
-    return {
-      status: response.status,
-      message: response.data.message
-    };
+    try {
+      const response = await this.api.delete('/admin/users/delete', { 
+        data: { userId } 
+      });
+      return {
+        status: response.status,
+        message: response.data.message
+      };
+    } catch (error) {
+      if (error instanceof AxiosError && error.response?.data?.message) {
+        throw new Error(error.response.data.message);
+      }
+      throw error;
+    }
   }
 
   async blockVacancy(vacancyId: string): Promise<ApiResponse> {
@@ -183,23 +231,31 @@ export class ServerApi {
   }
 
   async getBlockedVacancies(): Promise<ApiBlockedVacanciesResponse> {
-    const response = await this.api.get<ApiBlockedVacanciesResponse>('/admin/vacancies/blocked');
-    return response.data;
+    const response = await this.api.get<{data: ApiBlockedVacanciesResponse}>('/admin/vacancies/blocked');
+    return response.data.data;
   }
 
   async searchVacancies(params: HhVacancySearchParams): Promise<HhVacancySearchResponse> {
-    const response = await this.api.get<HhVacancySearchResponse>('/web/vacancies/search', { params });
-    return response.data;
+    const response = await this.api.get<{data: HhVacancySearchResponse}>('/web/vacancies/search', { params });
+    return response.data.data;
   }
 
   async getVacancy(id: string): Promise<HhVacancyFull> {
-    const response = await this.api.get<HhVacancyFull>(`/web/vacancies/${id}`);
-    return response.data;
+    const response = await this.api.get<{data: HhVacancyFull}>(`/web/vacancies/${id}`);
+    return response.data.data;
   }
 
   async getVacancyDetails(id: string): Promise<HhVacancyFull> {
-    const response = await this.api.get<{ vacancy: HhVacancyFull }>(`/admin/vacancies/${id}`);
-    return response.data.vacancy;
+    try {
+      const response = await this.api.get<{data: { vacancy: HhVacancyFull}}>(`/admin/vacancies/${id}`);
+      if (!response.data.data) {
+        throw new Error(`No data returned for vacancy ${id}`);
+      }
+      return response.data.data.vacancy;
+    } catch (error) {
+      console.error(`Failed to fetch vacancy details for ${id}:`, error);
+      throw error;
+    }
   }
 
   private handleError(error: AxiosError<ApiError>): never {

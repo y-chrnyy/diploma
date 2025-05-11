@@ -1,4 +1,4 @@
-import type { RequestHandler, Response } from "npm:express";
+import type { RequestHandler, Response } from "express";
 import { Database } from "../../models/index.ts";
 import { User } from "../../models/User.ts";
 import { authService } from "../../modules/index.ts";

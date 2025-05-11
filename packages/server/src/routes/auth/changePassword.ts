@@ -1,16 +1,16 @@
-import type { RequestHandler } from "npm:express";
+import type { RequestHandler } from "express";
+import { HttpError } from "../../middleware/errorMiddleware.ts";
 import { Database } from "../../models/index.ts";
 import { User } from "../../models/User.ts";
-import { authService } from "../../modules/index.ts";
-import { HttpError } from "../../middleware/errorMiddleware.ts";
-import bcrypt from "npm:bcryptjs";
 import { config } from "../../config/index.ts";
-
+import bcrypt from "bcryptjs";
+import { authService } from "../../modules/index.ts";
+import { UserType } from "../../types/index.ts";
 export const changePasswordHandler: RequestHandler = async (req, res) => {
     try {
         const userRepo = Database.getRepository(User)
         const { currentPassword, newPassword } = req.body
-        const userId = req.user?.id
+        const userId = (req as unknown as Request & { user?: UserType }).user?.id
 
         if (!userId) {
             throw new HttpError(401, 'Пользователь не авторизован')

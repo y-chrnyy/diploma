@@ -26,7 +26,6 @@ export const UserDetailsPage = () => {
     queryFn: async () => {
       if (!userId) throw new Error('User ID is required');
       const response = await api.getUserDetails(parseInt(userId));
-
       // Получаем детали вакансий, игнорируя ошибки
       const loadVacancy = async (id: string) => {
         try {
@@ -68,8 +67,12 @@ export const UserDetailsPage = () => {
       await api.deleteUserAsAdmin(parseInt(userId));
       toast.success('Пользователь удален');
       navigate('/admin');
-    } catch {
-      toast.error('Не удалось удалить пользователя');
+    } catch (error) {
+      if (error instanceof Error && error.message.includes('Cannot delete admin user')) {
+        toast.error('Нельзя удалить пользователя с правами админа');
+      } else {
+        toast.error('Не удалось удалить пользователя');
+      }
     }
   };
 

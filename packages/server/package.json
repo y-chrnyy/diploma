@@ -1,0 +1,38 @@
+{
+  "name": "@diploma/server",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "start": "npx tsx src/main.ts",
+    "build": "tsc",
+    "dev": "ts-node src/main.ts"
+  },
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "express": "4.16.2",
+    "express-async-errors": "^3.1.1",
+    "express-async-handler": "^1.2.0",
+    "jose": "^6.0.11",
+    "sqlite3": "^5.1.7",
+    "typeorm": "^0.3.21"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/body-parser": "^1.19.5",
+    "@types/cookie-parser": "^1.4.8",
+    "@types/cors": "^2.8.18",
+    "@types/express": "4.17.17",
+    "@types/express-serve-static-core": "4.17.35",
+    "@types/node": "^22.15.17",
+    "reflect-metadata": "^0.2.2",
+    "ts-node": "^10.9.2",
+    "tsx": "^4.19.4",
+    "typescript": "^5.8.3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

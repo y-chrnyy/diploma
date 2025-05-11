@@ -1,17 +1,17 @@
-import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from "npm:typeorm";
+import { Entity, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User.ts";
 
 @Entity()
 export class ViewedVacancy {
-    @PrimaryColumn()
-    userId: number;
+    @PrimaryColumn({ type: "int" })
+    userId!: number;
 
-    @PrimaryColumn()
-    vacancyId: string;
+    @PrimaryColumn({ type: "varchar" })
+    vacancyId!: string;
 
     @ManyToOne(() => User, { onDelete: "CASCADE" })
     @JoinColumn({ name: "userId" })
-    user: User;
+    user!: User;
 
     constructor(userId: number, vacancyId: string) {
         this.userId = userId;

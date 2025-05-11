@@ -1,11 +1,11 @@
-import type { RequestHandler } from "npm:express";
+import type { RequestHandler } from "express";
 import { Database } from "../../models/index.ts";
 import { ViewedVacancy } from "../../models/ViewedVacancy.ts";
 import { HttpError } from "../../middleware/errorMiddleware.ts";
-
+import { UserType } from "../../types/index.ts";
 export const getViewedHandler: RequestHandler = async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const userId = (req as unknown as Request & { user?: UserType }).user?.id;
         
         if (!userId) {
             throw new HttpError(401, "User is not authorized");
@@ -30,7 +30,7 @@ export const getViewedHandler: RequestHandler = async (req, res) => {
 
 export const addToViewedHandler: RequestHandler = async (req, res) => {
     try {
-        const userId = req.user?.id;
+        const userId = (req as unknown as Request & { user?: UserType }).user?.id;
         
         if (!userId) {
             throw new HttpError(401, "User is not authorized");

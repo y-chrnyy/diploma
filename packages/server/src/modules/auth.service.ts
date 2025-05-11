@@ -1,10 +1,11 @@
-import { DataSource, Repository } from "npm:typeorm";
+import { DataSource, Repository } from "typeorm";
 import { User } from "../models/User.ts";
-import { signJwt } from "../utils/index.ts";
-import { AuthPayload } from "../types/index.ts";
-import bcrypt from "npm:bcryptjs"
+import { generateTokens } from "../utils/jwt.ts";
+import bcrypt from "bcryptjs"
 import { config } from "../config/index.ts";
 import { HttpError } from "../middleware/index.ts";
+import { AuthPayload } from "../types/index.ts";
+
 
 
 export class AuthService {
@@ -17,8 +18,8 @@ export class AuthService {
     }
 
     async issueTokens(user: User) {
-        const accessToken = await signJwt(user.getUserCredentials(), 'access')
-        const refreshToken = await signJwt(user.getUserCredentials(), 'refresh')
+        const accessToken = await generateTokens(user.getUserCredentials(), 'access')
+        const refreshToken = await generateTokens(user.getUserCredentials(), 'refresh')
 
         return {
             accessToken,

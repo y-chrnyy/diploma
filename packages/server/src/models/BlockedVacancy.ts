@@ -1,9 +1,9 @@
-import { Entity, PrimaryColumn } from "npm:typeorm";
+import { Entity, PrimaryColumn } from "typeorm";
 
 @Entity()
 export class BlockedVacancy {
-    @PrimaryColumn()
-    vacancyId: string;
+    @PrimaryColumn({ type: "varchar" })
+    vacancyId!: string;
 
     constructor(vacancyId: string) {
         this.vacancyId = vacancyId;

@@ -30,11 +30,13 @@ export const BlockedVacanciesPage: React.FC = () => {
 
   // Проверяем состояние загрузки
   const isLoading = vacancyQueries.some(query => query.isLoading);
-
+  
   // Собираем все успешно загруженные вакансии
-  const allVacancies = vacancyQueries
-    .filter(query => query.isSuccess)
-    .map(query => query.data as HhVacancyFull);
+  const allVacancies = useMemo(() => {
+    return vacancyQueries
+      .filter(query => { return query.isSuccess && query.data})
+      .map(query => query.data as HhVacancyFull);
+  }, [vacancyQueries]);
 
   // Фильтруем вакансии по поисковому запросу
   const filteredVacancies = useMemo(() => {

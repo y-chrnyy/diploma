@@ -28,7 +28,6 @@ export const useSignup = () => {
         navigate('/')
     }
     
-
     const { mutateAsync } = useMutation({
         mutationKey: ['signup'],
         mutationFn: async ({ login, password, }: SignupScheme) => {
@@ -37,22 +36,20 @@ export const useSignup = () => {
             return await api.signUp({ login, password })
         },
         onSettled: () => setFetching(false),
-        onError: (error) => {
-            console.log(error)
-            toast.error(getErrorMessage(error as AxiosError<ApiError>))
-        },
         onSuccess
     })
 
-    const signup =  (auth: SignupScheme) => {
+    const signup = (auth: SignupScheme) => {
         if (auth.password !== auth.repeatPassword) {
             toast.error("Пароли не совпадают")
             return
         }
 
-        toast.promise(mutateAsync(auth), {
+        const promise = mutateAsync(auth)
+        
+        toast.promise(promise, {
             loading: 'Регистрация...',
-            error: 'Ошибка при регистрации'
+            error: (error) => getErrorMessage(error as AxiosError<ApiError>)
         })
     }
 

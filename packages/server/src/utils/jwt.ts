@@ -1,6 +1,13 @@
-import { SignJWT, jwtVerify } from "npm:jose"
+import { SignJWT, jwtVerify } from 'jose';
 import { config } from "../config/index.ts";
 import type { User } from "../models/User.ts";
+import type { JWTVerifyResult } from 'jose';
+
+// Добавляем тип для JWT payload
+type JWTPayload = User & {
+    exp?: number;
+    iat?: number;
+};
 
 export const signJwt = async (payload: Record<string, string | number | boolean>, type: 'access' | 'refresh') => {
     const jwt = await new SignJWT(payload)
@@ -12,15 +19,19 @@ export const signJwt = async (payload: Record<string, string | number | boolean>
     return jwt
 }
 
-export const verifyJwt = async (token: string) => {
+export const verifyJwt = async (token: string): Promise<JWTPayload | null> => {
     try {
-        const data = await jwtVerify<User>(token, config.secret, {
+        const data = await jwtVerify(token, config.secret, {
             algorithms: ["HS256"]
-        })
+        }) as JWTVerifyResult & { payload: JWTPayload };
 
-        return data.payload
+        return data.payload;
     } catch (error) {
         console.error(`Failed to verify JWT: ${error}`)
         return null
     }
+}
+
+export const generateTokens = async (payload: Record<string, string | number | boolean>, type: 'access' | 'refresh') => {
+    return await signJwt(payload, type);
 }

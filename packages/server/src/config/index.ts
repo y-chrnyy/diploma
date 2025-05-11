@@ -1,6 +1,8 @@
+import path from "node:path";
+import { DataSource } from "typeorm";
 import { Buffer } from "node:buffer";
 import { createSecretKey } from "node:crypto";
-import bcrypt from "npm:bcryptjs";
+import bcrypt from "bcryptjs";
 const key = 'someBullshit'
 const encodedKey = createSecretKey(Buffer.from(key, 'utf-8'))
 

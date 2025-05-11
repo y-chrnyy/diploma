@@ -1,6 +1,7 @@
-import express from "npm:express";
-import process from "node:process";
-import cookieParser from "npm:cookie-parser"
+import "reflect-metadata"
+import express from "express";
+import type { Request, Response, NextFunction } from "express";
+import cookieParser from "cookie-parser"
 import { Database } from "./models/index.ts";
 import { 
   loginWithJWTHandler, 
@@ -20,20 +21,21 @@ import {
   unblockVacancyHandler,
   getBlockedVacanciesHandler,
   getVacancyDetailsHandler,
-  changePasswordHandler
+  changePasswordHandler,
+  createAdminHandler
 } from "./routes/index.ts";
 import { errorMiddleware, jsonOnlyMiddleware } from "./middleware/index.ts";
 import bodyParser from "body-parser";
 import { AuthOnlyMiddleware } from "./middleware/authOnly.ts";
 import { AdminOnlyMiddleware } from "./middleware/adminOnly.ts";
-import cors from 'npm:cors'
-import errorHandler from 'npm:express-async-handler'
+import cors from "cors"
+import errorHandler from 'express-async-handler'
 import { logoutHandler } from "./routes/auth/logout.ts";
 import { responseFormatter } from "./middleware/responseFormatter.ts";
 import { searchVacanciesHandler, getVacancyHandler } from "./routes/web/handlers.ts";
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = 3000;
 
 // Lib middlewares
 app.use(cookieParser())
@@ -60,8 +62,8 @@ const jsonContentTypeExceptions = [
   '/auth/login-jwt',
   '/auth/logout',
 ];
-app.post('*', errorHandler((req, res, next) => {
-  if (jsonContentTypeExceptions.includes(req.path)) return next();
+app.post('*', errorHandler((req: Request, res: Response, next: NextFunction) => {
+  if (jsonContentTypeExceptions.includes(req.url)) return next();
   return jsonOnlyMiddleware(req, res, next);
 })); // Проверяем Content-Type только для POST запросов, кроме /auth/login-jwt
 
@@ -76,6 +78,7 @@ app.post('*', errorHandler((req, res, next) => {
  *                                                       
  */
 app.post("/auth/signup", errorHandler(signUpHandler));
+app.post("/auth/create-admin", errorHandler(createAdminHandler));
 app.post("/auth/login-jwt", errorHandler(loginWithJWTHandler));
 app.post("/auth/login", errorHandler(loginWithPasswordHandler));
 app.get('/auth/update', errorHandler(updateAccessTokenHandler));
@@ -85,13 +88,13 @@ app.post("/auth/change-password", errorHandler(AuthOnlyMiddleware), errorHandler
 // Web routes
 app.get("/web/vacancies/search", errorHandler(AuthOnlyMiddleware), errorHandler(searchVacanciesHandler));
 app.get("/web/vacancies/:id", errorHandler(AuthOnlyMiddleware), errorHandler(getVacancyHandler));
-app.delete("/web/delete", errorHandler(deleteUserHandler));
+app.delete("/auth/delete-user", errorHandler(AuthOnlyMiddleware), errorHandler(deleteUserHandler));
 app.post("/web/favorites/add", errorHandler(AuthOnlyMiddleware), errorHandler(addToFavoritesHandler));
 app.post("/web/favorites/remove", errorHandler(AuthOnlyMiddleware), errorHandler(removeFromFavoritesHandler));
 app.get("/web/favorites", errorHandler(AuthOnlyMiddleware), errorHandler(getFavoritesHandler));
 app.get("/web/viewed", errorHandler(AuthOnlyMiddleware), errorHandler(getViewedHandler));
 app.post("/web/viewed/add", errorHandler(AuthOnlyMiddleware), errorHandler(addToViewedHandler));
-app.get('/web/ping', (_, res) => {
+app.get('/web/ping', (_: Request, res: Response) => {
   res.send('pong')
 })
 

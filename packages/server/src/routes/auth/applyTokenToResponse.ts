@@ -1,4 +1,4 @@
-import type { Response } from "npm:express";
+import type { Response } from "express";
 
 export const applyTokenToResponse = (res: Response, accessToken: string, refreshToken: string) => {
     res.cookie('Authorization', `Bearer ${accessToken}`, {

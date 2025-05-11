@@ -2,57 +2,54 @@ import type { RequestHandler } from "express";
 import { verifyJwt } from "../utils/index.ts";
 import { Database } from "../models/index.ts";
 import { User } from "../models/User.ts";
+import { UserType } from "../types/index.ts";
 
 
 // работает
 export const AuthOnlyMiddleware: RequestHandler = async (req, res, next) => {
-    const { Authorization: auth, Refresh: refresh } = req.cookies as Record<string, number | string | boolean | null>
+    const { Authorization: auth, Refresh: refresh } = req.cookies;
 
-    if (!auth || typeof auth !== 'string') {
-        console.error(`Authorization header is not found: ${req.cookies.toString()}`)
-        res.status(403)
-            .setHeader('Content-type', 'application/json')
-            .send({
-                err_code: "403",
-                status_text: "Forbidden"
-            })
-        return
+    if (!auth) {
+        console.error(`Authorization header is not found: ${JSON.stringify(req.cookies)}`);
+        res.status(403).json({
+            err_code: "403",
+            status_text: "Forbidden"
+        });
+        return;
     }
 
-    const authToken = auth.replace('Bearer ', "")
-    const userPayload = await verifyJwt(authToken)
-    const userId = userPayload?.id
+    const authToken = auth.replace('Bearer ', "");
+    const userPayload = await verifyJwt(authToken);
+    const userId = userPayload?.id;
 
     if (!userId) {
-        res.status(403)
-            .setHeader('Content-type', 'application/json')
-            .send({
-                err_code: "403",
-                status_text: "Forbidden"
-            })
-        return
+        res.status(403).json({
+            err_code: "403",
+            status_text: "Forbidden"
+        });
+        return;
     }
 
-    const userRepo = Database.getRepository(User)
+    const userRepo = Database.getRepository(User);
     const user = await userRepo.findOneBy({
-        "id": userId
-    })
+        id: userId
+    });
 
     if (user === null) {
-        console.error(`Failed to fynd user by id: ${userId}`)
-        res.status(403)
-            .setHeader('Content-type', 'application/json')
-            .send({
-                err_code: "403",
-                status_text: "Forbidden"
-            })
-        return
+        console.error(`Failed to find user by id: ${userId}`);
+        res.status(403).json({
+            err_code: "403",
+            status_text: "Forbidden"
+        });
+        return;
     }
 
-    req.user = {
-        ...user,
+    (req as unknown as Request & {
+        user?: UserType
+    }).user = {
+        ...user.getUserCredentials(),
         access: authToken,
-        refresh: typeof refresh === "string" ? refresh.replace("Bearer ", "") : null
-    }
-    next()
+        refresh: refresh?.replace("Bearer ", "")
+    };
+    next();
 }

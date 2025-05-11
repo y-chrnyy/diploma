@@ -1,5 +1,5 @@
-import axios, { AxiosInstance } from "npm:axios";
-import { DataSource, Repository } from "npm:typeorm";
+import axios, { AxiosInstance } from "axios";
+import { DataSource, Repository } from "typeorm";
 import { BlockedVacancy } from "../models/BlockedVacancy.ts";
 
 interface HhVacancySearchParams {
@@ -9,6 +9,11 @@ interface HhVacancySearchParams {
   industry?: string | string[];
   per_page?: number;
   page?: number;
+  salary?: number;
+  experience?: string;
+  employment?: string[];
+  schedule?: string[];
+  only_with_salary?: boolean;
 }
 
 interface HhVacancySearchResponse {
@@ -42,15 +47,22 @@ export class HhService {
       // чтобы после фильтрации получить нужное количество
       const adjustedPerPage = (params.per_page || 20) + blockedIds.size;
 
+      // Преобразуем параметры для HH API
+      const apiParams = {
+        ...params,
+        per_page: adjustedPerPage,
+        area: Array.isArray(params.area) ? params.area.join(',') : params.area,
+        specialization: Array.isArray(params.specialization) ? params.specialization.join(',') : params.specialization,
+        industry: Array.isArray(params.industry) ? params.industry.join(',') : params.industry,
+        employment: Array.isArray(params.employment) ? params.employment.join(',') : params.employment,
+        schedule: Array.isArray(params.schedule) ? params.schedule.join(',') : params.schedule,
+        only_with_salary: params.only_with_salary ? 'true' : undefined,
+        salary: params.salary ? params.salary.toString() : undefined,
+      };
+
       // Делаем запрос к HH API
       const response = await this.api.get<HhVacancySearchResponse>('/vacancies', {
-        params: {
-          ...params,
-          per_page: adjustedPerPage,
-          area: Array.isArray(params.area) ? params.area.join(',') : params.area,
-          specialization: Array.isArray(params.specialization) ? params.specialization.join(',') : params.specialization,
-          industry: Array.isArray(params.industry) ? params.industry.join(',') : params.industry,
-        }
+        params: apiParams
       });
 
       const data = response.data;

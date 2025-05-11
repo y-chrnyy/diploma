@@ -1,24 +1,20 @@
-import type { Request, Response, NextFunction } from "npm:express";
-import type { ApiResponse, SuccessResponse, ErrorResponse } from "../types/response.ts";
+import type { Request, Response, NextFunction } from "express";
+import type { ApiResponse } from "../types/response.ts";
 
 export const responseFormatter = (_req: Request, res: Response, next: NextFunction) => {
   const originalJson = res.json;
   const originalSend = res.send;
 
   // Перехватываем res.json()
-  res.json = function (body: any): Response {
+  res.json = function <T extends object>(body: T): Response {
     if (body && typeof body === 'object') {
       const statusCode = res.statusCode || 200;
-      const formattedResponse: ApiResponse = {
+      const formattedResponse: ApiResponse<T> = {
         status: statusCode >= 400 ? 'error' : 'success',
         code: statusCode,
-        ...body
+        data: statusCode >= 400 ? undefined : body,
+        message: statusCode >= 400 ? (body as { message?: string }).message : undefined
       };
-
-      if (statusCode >= 400 && body.message) {
-        formattedResponse.message = body.message;
-        delete formattedResponse.data;
-      }
 
       return originalJson.call(this, formattedResponse);
     }
@@ -26,7 +22,7 @@ export const responseFormatter = (_req: Request, res: Response, next: NextFuncti
   };
 
   // Перехватываем res.send()
-  res.send = function (body: any): Response {
+  res.send = function (body: unknown): Response {
     // Пропускаем форматирование для ping endpoint
     if (body === 'pong') {
       return originalSend.call(this, body);
