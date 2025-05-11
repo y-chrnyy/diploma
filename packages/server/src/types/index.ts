@@ -1,6 +1,6 @@
-export * from './request.ts';
-export * from './response.ts';
-export * from './routeFn.ts';
+export * from './request';
+export * from './response';
+export * from './routeFn';
 export type UserType = {
     access: string;
     refresh: string;
@@ -8,3 +8,4 @@ export type UserType = {
     login: string;
     role: string;
 }
+

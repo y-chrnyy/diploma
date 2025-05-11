@@ -1,1 +1,1 @@
-export * from './jwt.ts'
+export * from './jwt'

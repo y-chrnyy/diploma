@@ -1,10 +1,10 @@
 import type { RequestHandler, Response } from "express";
-import { Database } from "../../models/index.ts";
-import { User } from "../../models/User.ts";
-import { authService } from "../../modules/index.ts";
-import { applyTokenToResponse } from "./applyTokenToResponse.ts";
-import { verifyJwt } from "../../utils/jwt.ts";
-import { HttpError } from "../../middleware/errorMiddleware.ts";
+import { Database } from "../../models/index";
+import { User } from "../../models/User";
+import { authService } from "../../modules/index";
+import { applyTokenToResponse } from "./applyTokenToResponse";
+import { verifyJwt } from "../../utils/jwt";
+import { HttpError } from "../../middleware/errorMiddleware";
 
 export const loginWithJWTHandler: RequestHandler = async (req, res) => {
     const accessTokenFromCookie = req.cookies['Authorization'] as string | undefined

@@ -1,6 +1,6 @@
 import { SignJWT, jwtVerify } from 'jose';
-import { config } from "../config/index.ts";
-import type { User } from "../models/User.ts";
+import { config } from "../config/index";
+import type { User } from "../models/User";
 import type { JWTVerifyResult } from 'jose';
 
 // Добавляем тип для JWT payload

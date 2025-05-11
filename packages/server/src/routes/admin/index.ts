@@ -1,12 +1,12 @@
 import type { RequestHandler } from "express";
-import { Database } from "../../models/index.ts";
-import { User, UserRole } from "../../models/User.ts";
-import { HttpError } from "../../middleware/errorMiddleware.ts";
-import { BlockedVacancy } from "../../models/BlockedVacancy.ts";
-import { FavoriteVacancy } from "../../models/FavoriteVacancy.ts";
-import { ViewedVacancy } from "../../models/ViewedVacancy.ts";
-import { HH_API_URL } from "../../config/index.ts";
-import { HhService } from "../../modules/hh.service.ts";
+import { Database } from "../../models/index";
+import { User, UserRole } from "../../models/User";
+import { HttpError } from "../../middleware/errorMiddleware";
+import { BlockedVacancy } from "../../models/BlockedVacancy";
+import { FavoriteVacancy } from "../../models/FavoriteVacancy";
+import { ViewedVacancy } from "../../models/ViewedVacancy";
+import { HH_API_URL } from "../../config/index";
+import { HhService } from "../../modules/hh.service";
 
 const hhService = new HhService(Database);
 

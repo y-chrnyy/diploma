@@ -1,8 +1,8 @@
 import type { RequestHandler } from "express";
-import { verifyJwt } from "../utils/index.ts";
-import { Database } from "../models/index.ts";
-import { User } from "../models/User.ts";
-import { UserType } from "../types/index.ts";
+import { verifyJwt } from "../utils/index";
+import { Database } from "../models/index";
+import { User } from "../models/User";
+import { UserType } from "../types/index";
 
 
 // работает

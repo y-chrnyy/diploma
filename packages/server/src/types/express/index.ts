@@ -1,5 +1,4 @@
-import type { Request } from "express";
-import { UserRole } from "../../models/User.ts";
+import { UserRole } from "../../models/User";
 
 export interface AuthenticatedUser {
     id: number;

@@ -2,7 +2,7 @@ import "reflect-metadata"
 import express from "express";
 import type { Request, Response, NextFunction } from "express";
 import cookieParser from "cookie-parser"
-import { Database } from "./models/index.ts";
+import { Database } from "./models/index";
 import { 
   loginWithJWTHandler, 
   loginWithPasswordHandler, 
@@ -17,17 +17,17 @@ import {
   changePasswordHandler,
   createAdminHandler,
   deleteUserHandler as randomName
-} from "./routes/index.ts";
-import { errorMiddleware, jsonOnlyMiddleware } from "./middleware/index.ts";
+} from "./routes/index";
+import { errorMiddleware, jsonOnlyMiddleware } from "./middleware/index";
 import bodyParser from "body-parser";
-import { AuthOnlyMiddleware } from "./middleware/authOnly.ts";
-import { AdminOnlyMiddleware } from "./middleware/adminOnly.ts";
+import { AuthOnlyMiddleware } from "./middleware/authOnly";
+import { AdminOnlyMiddleware } from "./middleware/adminOnly";
 import cors from "cors"
 import errorHandler from 'express-async-handler'
-import { logoutHandler } from "./routes/auth/logout.ts";
-import { responseFormatter } from "./middleware/responseFormatter.ts";
-import { searchVacanciesHandler, getVacancyHandler } from "./routes/web/handlers.ts";
-import { getAllUsersHandler, getUserDetailsHandler, promoteToAdminHandler, blockVacancyHandler, unblockVacancyHandler, getBlockedVacanciesHandler, getVacancyDetailsHandler } from "./routes/admin/index.ts";
+import { logoutHandler } from "./routes/auth/logout";
+import { responseFormatter } from "./middleware/responseFormatter";
+import { searchVacanciesHandler, getVacancyHandler } from "./routes/web/handlers";
+import { getAllUsersHandler, getUserDetailsHandler, promoteToAdminHandler, blockVacancyHandler, unblockVacancyHandler, getBlockedVacanciesHandler, getVacancyDetailsHandler } from "./routes/admin/index";
 
 const app = express();
 const PORT = 3000;

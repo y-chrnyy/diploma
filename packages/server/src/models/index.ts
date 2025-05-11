@@ -1,10 +1,11 @@
 import { DataSource } from "typeorm";
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { User } from "./User.ts";
-import { FavoriteVacancy } from "./FavoriteVacancy.ts";
-import { ViewedVacancy } from "./ViewedVacancy.ts";
-import { BlockedVacancy } from "./BlockedVacancy.ts";
+import { config } from "../config/index";
+import { User } from "./User";
+import { FavoriteVacancy } from "./FavoriteVacancy";
+import { ViewedVacancy } from "./ViewedVacancy";
+import { BlockedVacancy } from "./BlockedVacancy";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

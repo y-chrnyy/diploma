@@ -2,14 +2,15 @@ import type { RequestHandler } from "express";
 import { Database } from "../../models/index.ts";
 import { User, UserRole } from "../../models/User.ts";
 import { HttpError } from "../../middleware/errorMiddleware.ts";
-import type { AuthenticatedRequest } from "../../types/express/index.ts";
+import type { AuthenticatedRequest } from "../../types/express/index";
+import { UserType } from "../../types/index";
 
-export const deleteUserHandler: RequestHandler = async (req: AuthenticatedRequest, res) => {
+export const deleteUserHandler: RequestHandler = async (req, res) => {
     try {
         const userRepo = Database.getRepository(User);
-        const currentUserId = req.user?.id;
+        const currentUserId = (req as unknown as {user: UserType}).user?.id;
         // Получаем ID пользователя для удаления либо из body (админ панель), либо текущего пользователя (профиль)
-        const targetUserId = req.body.userId || currentUserId;
+        const targetUserId = (req.body as unknown as {userId: number}).userId || currentUserId;
 
         if (!currentUserId) {
             throw new HttpError(401, "User is not authenticated");
