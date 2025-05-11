@@ -13,16 +13,10 @@ import {
   removeFromFavoritesHandler,
   getViewedHandler,
   addToViewedHandler,
-  getAllUsersHandler,
-  getUserDetailsHandler,
-  promoteToAdminHandler,
-  deleteUserHandler,
-  blockVacancyHandler,
-  unblockVacancyHandler,
-  getBlockedVacanciesHandler,
-  getVacancyDetailsHandler,
+
   changePasswordHandler,
-  createAdminHandler
+  createAdminHandler,
+  deleteUserHandler as randomName
 } from "./routes/index.ts";
 import { errorMiddleware, jsonOnlyMiddleware } from "./middleware/index.ts";
 import bodyParser from "body-parser";
@@ -33,6 +27,7 @@ import errorHandler from 'express-async-handler'
 import { logoutHandler } from "./routes/auth/logout.ts";
 import { responseFormatter } from "./middleware/responseFormatter.ts";
 import { searchVacanciesHandler, getVacancyHandler } from "./routes/web/handlers.ts";
+import { getAllUsersHandler, getUserDetailsHandler, promoteToAdminHandler, blockVacancyHandler, unblockVacancyHandler, getBlockedVacanciesHandler, getVacancyDetailsHandler } from "./routes/admin/index.ts";
 
 const app = express();
 const PORT = 3000;
@@ -88,7 +83,7 @@ app.post("/auth/change-password", errorHandler(AuthOnlyMiddleware), errorHandler
 // Web routes
 app.get("/web/vacancies/search", errorHandler(AuthOnlyMiddleware), errorHandler(searchVacanciesHandler));
 app.get("/web/vacancies/:id", errorHandler(AuthOnlyMiddleware), errorHandler(getVacancyHandler));
-app.delete("/auth/delete-user", errorHandler(AuthOnlyMiddleware), errorHandler(deleteUserHandler));
+app.delete("/auth/delete-user", errorHandler(AuthOnlyMiddleware), errorHandler(randomName));
 app.post("/web/favorites/add", errorHandler(AuthOnlyMiddleware), errorHandler(addToFavoritesHandler));
 app.post("/web/favorites/remove", errorHandler(AuthOnlyMiddleware), errorHandler(removeFromFavoritesHandler));
 app.get("/web/favorites", errorHandler(AuthOnlyMiddleware), errorHandler(getFavoritesHandler));
@@ -102,7 +97,7 @@ app.get('/web/ping', (_: Request, res: Response) => {
 app.get("/admin/users", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(getAllUsersHandler));
 app.get("/admin/users/:userId", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(getUserDetailsHandler));
 app.post("/admin/users/promote", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(promoteToAdminHandler));
-app.delete("/admin/users/delete", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(deleteUserHandler));
+app.delete("/admin/users/delete", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(randomName));
 app.post("/admin/vacancies/block", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(blockVacancyHandler));
 app.post("/admin/vacancies/unblock", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(unblockVacancyHandler));
 app.get("/admin/vacancies/blocked", errorHandler(AuthOnlyMiddleware), errorHandler(AdminOnlyMiddleware), errorHandler(getBlockedVacanciesHandler));
