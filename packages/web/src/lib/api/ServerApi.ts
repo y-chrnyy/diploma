@@ -22,7 +22,7 @@ export class ServerApi {
 
   constructor(config: ApiConfig) {
     this.api = axios.create({
-      baseURL: config.baseURL,
+      baseURL: process.env.SERVER_API_URL || config.baseURL,
       timeout: config.timeout || 10000,
       headers: {
         'Content-Type': 'application/json',
@@ -268,7 +268,7 @@ export class ServerApi {
   }
 } 
 
-export const SERVER_API_URL = "http://localhost:3000";
+export const SERVER_API_URL = process.env.SERVER_API_URL || "http://158.160.159.69:3000";
 
 export const api = new ServerApi({
   baseURL: SERVER_API_URL,
