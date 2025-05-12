@@ -14,6 +14,10 @@ const getErrorMessage = (error: AxiosError<ApiError>) => {
     if (msg === 'Bad Request. Check if login and password have been provided') {
         return "Необходимо ввести логин и пароль"
     }
+
+    if(msg === "Login is already taken") {
+        return 'Логин уже занят'
+    }
     return "Ошибка при регистрации"
 }
 
