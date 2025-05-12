@@ -24,7 +24,7 @@ export const VacancyCard = ({ vacancy, className, ...props }: ExtendedVacancyCar
   const navigate = useNavigate();
   const location = useLocation();
   const { toggleFavorite, isPending } = useFavoriteVacancy();
-  const { isFavorite } = useFavorites();
+  const { isFavorite, isLoading: isFavoritesLoading } = useFavorites();
   const { login, isAdmin } = useUser();
   const { isBlocked, refreshBlockedVacancies } = useBlockedVacancies();
   const [blockLoading, setBlockLoading] = React.useState(false);
@@ -140,10 +140,10 @@ export const VacancyCard = ({ vacancy, className, ...props }: ExtendedVacancyCar
                   variant={isFavorite(vacancy.id) ? "default" : "secondary"}
                   size="icon"
                   onClick={handleToggleFavorite}
-                  disabled={isPending}
+                  disabled={isPending || isFavoritesLoading}
                   className="h-10 w-10 flex-shrink-0"
                 >
-                  {isPending ? (
+                  {isPending || isFavoritesLoading ? (
                     <Loader2 className="h-5 w-5 animate-spin" />
                   ) : (
                     <Star className={cn("h-5 w-5", isFavorite(vacancy.id) && "fill-current")} />

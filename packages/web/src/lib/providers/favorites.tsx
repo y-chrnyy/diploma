@@ -6,6 +6,7 @@ interface FavoritesContextType {
   favorites: string[];
   setFavorites: (favorites: string[]) => void;
   isFavorite: (id: string) => boolean;
+  isLoading: boolean;
 }
 
 const FavoritesContext = createContext<FavoritesContextType | null>(null);
@@ -21,7 +22,7 @@ export const useFavorites = () => {
 export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [favorites, setFavorites] = useState<string[]>([]);
 
-  const { data } = useQuery({
+  const { data, isLoading } = useQuery({
     queryKey: ['favorites'],
     queryFn: async () => {
       try {
@@ -40,10 +41,13 @@ export const FavoritesProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     }
   }, [data]);
 
-  const isFavorite = (id: string) => favorites.includes(id);
+  const isFavorite = (id: string) => {
+    if (isLoading || !favorites) return false;
+    return favorites.includes(id);
+  };
 
   return (
-    <FavoritesContext.Provider value={{ favorites, setFavorites, isFavorite }}>
+    <FavoritesContext.Provider value={{ favorites, setFavorites, isFavorite, isLoading }}>
       {children}
     </FavoritesContext.Provider>
   );

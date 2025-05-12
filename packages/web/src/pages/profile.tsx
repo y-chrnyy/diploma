@@ -14,6 +14,10 @@ import { useState } from "react";
 import { api } from "@/lib/api/ServerApi.ts";
 import { toast } from "sonner";
 import { useLogout } from "./hooks/useLogout.ts";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs.tsx";
+import { useSavedVacancies } from "./hooks/useSavedVacancies.ts";
+import { LoadingSpinner } from "@/components/ui/loading-spinner.tsx";
+import VacancyCard from "@/components/ui/vacancy-card/index.tsx";
 
 interface PasswordFormValues {
   currentPassword: string;
@@ -25,6 +29,10 @@ export default function ProfilePage() {
   const { login, userId, clearUserData } = useUser();
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'favorites' | 'viewed'>('favorites');
+  
+  const favorites = useSavedVacancies('favorites');
+  const viewed = useSavedVacancies('viewed');
   
   const form = useForm<PasswordFormValues>({
     defaultValues: {
@@ -81,6 +89,45 @@ export default function ProfilePage() {
     }
   };
 
+  const renderVacancies = () => {
+    const { data, isLoading, isError } = activeTab === 'favorites' ? favorites : viewed;
+
+    if (isLoading) {
+      return (
+        <div className="flex justify-center p-8">
+          <LoadingSpinner />
+        </div>
+      );
+    }
+
+    if (isError) {
+      return (
+        <div className="text-center p-8 text-destructive">
+          Произошла ошибка при загрузке вакансий
+        </div>
+      );
+    }
+
+    if (!data?.items?.length) {
+      return (
+        <div className="text-center p-8 text-muted-foreground">
+          {activeTab === 'favorites' ? 'Нет избранных вакансий' : 'Нет просмотренных вакансий'}
+        </div>
+      );
+    }
+
+    return (
+      <div className="space-y-4">
+        {data.items.map((vacancy) => (
+          <VacancyCard
+            key={vacancy.id}
+            vacancy={vacancy}
+          />
+        ))}
+      </div>
+    );
+  };
+
   return (
     <div className="container max-w-2xl mx-auto px-4 py-12">
       <div className="bg-card rounded-lg shadow-sm p-6 mb-8">
@@ -100,6 +147,21 @@ export default function ProfilePage() {
             <p className="text-lg font-medium">Пользователь: {login}</p>
             <p className="text-sm text-muted-foreground">ID: {userId}</p>
           </div>
+        </div>
+
+        <div className="mb-8">
+          <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as 'favorites' | 'viewed')}>
+            <TabsList className="w-full">
+              <TabsTrigger value="favorites" className="flex-1">Избранное</TabsTrigger>
+              <TabsTrigger value="viewed" className="flex-1">Просмотренные</TabsTrigger>
+            </TabsList>
+            <TabsContent value="favorites">
+              {renderVacancies()}
+            </TabsContent>
+            <TabsContent value="viewed">
+              {renderVacancies()}
+            </TabsContent>
+          </Tabs>
         </div>
         
         <div className="mb-8">
