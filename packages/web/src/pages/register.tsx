@@ -14,8 +14,10 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="container flex items-center justify-center min-h-screen py-12 w-screen">
-      <SignupForm onSubmit={signup} isDisabled={isFetching} />
+    <div className="flex min-h-screen items-center justify-center">
+      <div className="w-full max-w-md px-4">
+        <SignupForm onSubmit={signup} isDisabled={isFetching} />
+      </div>
     </div>
   );
 } 
