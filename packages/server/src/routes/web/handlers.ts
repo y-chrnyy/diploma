@@ -42,7 +42,8 @@ export const getVacancyHandler: RequestHandler = async (req, res) => {
     const isBlocked = await blockedRepo.findOneBy({ vacancyId: id });
 
     // Если вакансия заблокирована и пользователь не админ - возвращаем 403
-    if (isBlocked && (req as unknown as Request & { user?: UserType }).user?.role !== UserRole.ADMIN) {
+    const user = (req as unknown as Request & { user?: UserType }).user;
+    if (isBlocked && (!user || user.role !== UserRole.ADMIN)) {
       res.status(403).json({ message: 'Vacancy is blocked' });
       return;
     }

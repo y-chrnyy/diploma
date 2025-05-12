@@ -81,8 +81,8 @@ app.post("/auth/logout", errorHandler(AuthOnlyMiddleware), errorHandler(logoutHa
 app.post("/auth/change-password", errorHandler(AuthOnlyMiddleware), errorHandler(changePasswordHandler));
 
 // Web routes
-app.get("/web/vacancies/search", errorHandler(AuthOnlyMiddleware), errorHandler(searchVacanciesHandler));
-app.get("/web/vacancies/:id", errorHandler(AuthOnlyMiddleware), errorHandler(getVacancyHandler));
+app.get("/web/vacancies/search", errorHandler(searchVacanciesHandler));
+app.get("/web/vacancies/:id", errorHandler(getVacancyHandler));
 app.delete("/auth/delete-user", errorHandler(AuthOnlyMiddleware), errorHandler(randomName));
 app.post("/web/favorites/add", errorHandler(AuthOnlyMiddleware), errorHandler(addToFavoritesHandler));
 app.post("/web/favorites/remove", errorHandler(AuthOnlyMiddleware), errorHandler(removeFromFavoritesHandler));
