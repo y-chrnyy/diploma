@@ -268,8 +268,8 @@ export class ServerApi {
   }
 } 
 
-export const SERVER_API_URL = "http://158.160.159.69:3000";
-// export const SERVER_API_URL = "http://localhost:3000";
+// export const SERVER_API_URL = "http://158.160.159.69:3000";
+export const SERVER_API_URL = "http://localhost:3000";
 
 export const api = new ServerApi({
   baseURL: SERVER_API_URL,

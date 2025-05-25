@@ -7,36 +7,53 @@ interface SavedVacanciesData {
   found: number;
 }
 
-async function getFavoriteVacancies(): Promise<SavedVacanciesData> {
-  const response = await api.getFavorites();
+async function getFavoriteVacanciesData(ids: string[]): Promise<SavedVacanciesData> {
   const vacancies = await Promise.all(
-    response.favorites.map((id: string) => api.getVacancy(id).catch(() => null))
+    ids.map((id) => api.getVacancy(id).catch(() => null))
   );
   return {
     items: vacancies.filter((v: HhVacancyFull | null): v is HhVacancyFull => v !== null),
-    found: response.favorites.length
+    found: ids.length
   };
 }
 
-async function getViewedVacancies(): Promise<SavedVacanciesData> {
-  const response = await api.getViewed();
+async function getViewedVacanciesData(ids: string[]): Promise<SavedVacanciesData> {
   const vacancies = await Promise.all(
-    response.viewed.map((id: string) => api.getVacancy(id).catch(() => null))
+    ids.map((id) => api.getVacancy(id).catch(() => null))
   );
   return {
     items: vacancies.filter((v: HhVacancyFull | null): v is HhVacancyFull => v !== null),
-    found: response.viewed.length
+    found: ids.length
   };
 }
 
 export const useSavedVacancies = (type: 'favorites' | 'viewed') => {
-  return useQuery<SavedVacanciesData>({
-    queryKey: [type],
+  const { data: ids = [] } = useQuery<string[], Error>({
+    queryKey: [type, 'ids'],
     queryFn: async () => {
       try {
-        return type === 'favorites' 
-          ? await getFavoriteVacancies()
-          : await getViewedVacancies();
+        if (type === 'favorites') {
+          const response = await api.getFavorites();
+          return response.favorites;
+        } else {
+          const response = await api.getViewed();
+          return response.viewed;
+        }
+      } catch (error) {
+        console.error(`Failed to fetch ${type} ids:`, error);
+        return [];
+      }
+    }
+  });
+
+  return useQuery<SavedVacanciesData, Error>({
+    queryKey: [type, 'data', ids],
+    enabled: ids.length > 0,
+    queryFn: async () => {
+      try {
+        return type === 'favorites'
+          ? await getFavoriteVacanciesData(ids)
+          : await getViewedVacanciesData(ids);
       } catch (error) {
         console.error(`Failed to fetch ${type} vacancies:`, error);
         return {

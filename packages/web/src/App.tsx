@@ -9,7 +9,6 @@ import NotFoundPage from "@/pages/not-found.tsx";
 import ForbiddenPage from "@/pages/forbidden.tsx";
 import { useJwtLogin } from "@/pages/hooks/useJwtLogin.ts";
 import { LoadingSpinner } from "@/components/ui/loading-spinner.tsx";
-import VacancyCardExample from "@/components/ui/vacancy-card/example.tsx";
 import VacancyPage from "@/components/templates/vacancy-page.tsx";
 import { ViewedProvider } from "@/lib/contexts/ViewedContext.tsx";
 import { BlockedVacanciesProvider } from "@/lib/contexts/BlockedVacanciesContext.tsx";
@@ -34,7 +33,6 @@ function App() {
           {/* Маршруты без Layout */}
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
-          <Route path="/test" element={<VacancyCardExample />} />
 
           {/* Маршруты с Layout */}
           <Route element={<Layout />}>
