@@ -1,26 +1,36 @@
 # Базовый образ
 FROM node:18-alpine
 
+# Устанавливаем необходимые зависимости для сборки
+RUN apk add --no-cache python3 make g++ git
+
 # Рабочая директория
 WORKDIR /app
 
 # Устанавливаем concurrently глобально
 RUN npm install -g concurrently
 
-# Копируем файлы package.json и yarn.lock
-COPY package*.json yarn.lock ./
+# Копируем только package.json из packages
 COPY packages/server/package*.json ./packages/server/
 COPY packages/web/package*.json ./packages/web/
 
-# Устанавливаем зависимости
+# Устанавливаем зависимости для каждого проекта
+WORKDIR /app/packages/server
+RUN yarn install
+
+WORKDIR /app/packages/web
 RUN yarn install
 
 # Копируем исходный код
+WORKDIR /app
 COPY . .
 
 # Собираем проекты
-RUN cd packages/server && yarn build
-RUN cd packages/web && yarn build
+WORKDIR /app/packages/server
+RUN yarn build
+
+WORKDIR /app/packages/web
+RUN yarn build
 
 # Открываем порты
 EXPOSE 3000 5173
