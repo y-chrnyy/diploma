@@ -16,21 +16,15 @@ COPY packages/web/package*.json ./packages/web/
 
 # Устанавливаем зависимости для каждого проекта
 WORKDIR /app/packages/server
-RUN yarn install
+RUN npm run install
 
 WORKDIR /app/packages/web
-RUN yarn install
+RUN npm run install
 
 # Копируем исходный код
 WORKDIR /app
 COPY . .
 
-# Собираем проекты
-WORKDIR /app/packages/server
-RUN yarn build
-
-WORKDIR /app/packages/web
-RUN yarn build
 
 # Открываем порты
 EXPOSE 3000 5173
