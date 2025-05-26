@@ -28,5 +28,9 @@ COPY . .
 # Открываем порты
 EXPOSE 3000 5173
 
+# Устанавливаем переменные окружения для привязки к 0.0.0.0
+ENV HOST=0.0.0.0
+ENV PORT=3000
+
 # Запускаем оба приложения одновременно
-CMD ["concurrently", "cd packages/server && npm run start", "cd packages/web && HOST=0.0.0.0 npm run dev"] 
+CMD ["concurrently", "cd packages/server && HOST=0.0.0.0 PORT=3000 npm run start", "cd packages/web && HOST=0.0.0.0 PORT=5173 npm run dev"] 
