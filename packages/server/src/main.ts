@@ -41,7 +41,7 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
-app.options('*', cors()); // разрешаем preflight для всех роутов
+app.options('*', cors()); 
 
 /***
  *    ███╗   ███╗██╗██████╗ ██████╗ ██╗     ███████╗██╗    ██╗ █████╗ ██████╗ ███████╗███████╗
@@ -52,7 +52,7 @@ app.options('*', cors()); // разрешаем preflight для всех роу
  *    ╚═╝     ╚═╝╚═╝╚═════╝ ╚═════╝ ╚══════╝╚══════╝ ╚══╝╚══╝ ╚═╝  ╚═╝╚═╝  ╚═╝╚══════╝╚══════╝
  *                                                                                            
  */
-app.use(responseFormatter); // Добавляем форматирование ответов
+app.use(responseFormatter); 
 const jsonContentTypeExceptions = [
   '/auth/login-jwt',
   '/auth/logout',
@@ -60,7 +60,7 @@ const jsonContentTypeExceptions = [
 app.post('*', errorHandler((req: Request, res: Response, next: NextFunction) => {
   if (jsonContentTypeExceptions.includes(req.url)) return next();
   return jsonOnlyMiddleware(req, res, next);
-})); // Проверяем Content-Type только для POST запросов, кроме /auth/login-jwt
+})); 
 
 
 /***
