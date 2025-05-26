@@ -16,18 +16,17 @@ COPY packages/web/package*.json ./packages/web/
 
 # Устанавливаем зависимости для каждого проекта
 WORKDIR /app/packages/server
-RUN npm run install
+RUN npm install
 
 WORKDIR /app/packages/web
-RUN npm run install
+RUN npm install
 
 # Копируем исходный код
 WORKDIR /app
 COPY . .
 
-
 # Открываем порты
 EXPOSE 3000 5173
 
 # Запускаем оба приложения одновременно
-CMD concurrently "cd packages/server && yarn start" "cd packages/web && HOST=0.0.0.0 yarn dev" 
+CMD ["concurrently", "cd packages/server && npm run start", "cd packages/web && HOST=0.0.0.0 npm run dev"] 
