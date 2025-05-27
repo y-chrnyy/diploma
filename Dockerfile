@@ -33,4 +33,4 @@ ENV HOST=0.0.0.0
 ENV PORT=3000
 
 # Запускаем оба приложения одновременно
-CMD ["concurrently", "cd packages/server && HOST=0.0.0.0 PORT=3000 npm run start", "cd packages/web && HOST=0.0.0.0 PORT=5173 npm run dev"] 
+CMD ["concurrently", "cd packages/server && HOST=0.0.0.0 PORT=3000 npm run start", "cd packages/web && npm run dev -- --host 0.0.0.0 --port 5173"] 
