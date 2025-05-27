@@ -12,7 +12,7 @@ export const searchVacanciesHandler: RequestHandler = async (req, res) => {
     const params = req.query;
     const result = await hhService.searchVacancies({
       text: params.text as string,
-      area: params.area as string | string[],
+      area: params.area && (params.area as string).trim() ? params.area as string | string[] : "1",
       salary: params.salary ? parseInt(params.salary as string) : undefined,
       experience: params.experience as string,
       employment: params.employment as string[],

@@ -49,6 +49,7 @@ const experienceOptions = [
 ];
 
 const MOSCOW_REGION_ID = "2019";
+const ALL_REGIONS = "1";
 
 const employmentOptions = [
   { value: "full", label: "Полная занятость" },
@@ -75,14 +76,25 @@ const FiltersForm = ({ onSubmit, defaultValues }: FiltersFormProps) => {
   const [areas, setAreas] = useState<Area[]>([]);
   const [isLoadingAreas, setIsLoadingAreas] = useState(true);
 
+  const flattenAreas = (areas: Area[]): Area[] => {
+    return areas.reduce((acc: Area[], area: Area) => {
+      acc.push(area);
+      if (area.areas && area.areas.length > 0) {
+        acc.push(...flattenAreas(area.areas));
+      }
+      return acc;
+    }, []);
+  };
+
   useEffect(() => {
     const fetchAreas = async () => {
       try {
         const response = await fetch('https://api.hh.ru/areas');
         const data = await response.json();
-        // Получаем только регионы России (id: 113)
+        // Получаем регионы России (id: 113) и делаем плоский список
         const russianAreas = data.find((country: Area) => country.id === "113")?.areas || [];
-        setAreas(russianAreas);
+        const flatAreas = flattenAreas(russianAreas);
+        setAreas(flatAreas);
       } catch (error) {
         console.error('Failed to fetch areas:', error);
       } finally {
@@ -131,10 +143,11 @@ const FiltersForm = ({ onSubmit, defaultValues }: FiltersFormProps) => {
                     placeholder={isLoadingAreas ? "Загрузка регионов..." : "Выберите регион"}
                     className={isLoadingAreas ? "opacity-50 pointer-events-none" : ""}
                   >
+                    <SelectItem value="1">Москва</SelectItem>
                     {!isLoadingAreas && areas.map((area) => (
-                      <SelectItem key={area.id} value={area.id}>
-                        {area.name}
-                      </SelectItem>
+                        <SelectItem key={area.id} value={area.id}>
+                          {area.name}
+                        </SelectItem>
                     ))}
                   </SelectTrigger>
                 </Select>
