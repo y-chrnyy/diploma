@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { ApiLoginResponse } from '@/lib/api/types.ts';
 import { useNavigate } from "react-router-dom";
 import { useUser } from "@/lib/contexts/UserContext.tsx";
-import { AxiosError } from "npm:axios@^1.9.0";
+import { AxiosError } from "axios";
 
 
 
