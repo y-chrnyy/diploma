@@ -1,0 +1,574 @@
+++++php/login.php+++++
+<?php 
+// Настройка CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Max-Age: 86400'); // кэш на 24 часа
+
+// Обработка preflight запроса
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit();
+}
+
+// Установка типа контента
+header('Content-Type: application/json; charset=utf-8');
+
+require_once('db.php');
+
+try {
+    // Получаем данные из POST запроса
+    $postData = file_get_contents('php://input');
+    $data = json_decode($postData, true) ?? $_POST;
+
+    $login = $data['login'];
+    $password = $data['password'];
+
+    // Проверяем обязательные поля
+    if (empty($login) || empty($password)) {
+        throw new Exception("Логин и пароль обязательны для заполнения");
+    }
+
+    // Подготовка запроса
+    $stmt = $db->prepare('SELECT id, login, email, role FROM user WHERE login = ? AND password = ?');
+
+    if (!$stmt) {
+        throw new Exception("Ошибка подготовки запроса: " . $db->error);
+    }
+
+    $stmt->bind_param("ss", $login, $password);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows === 0) {
+        throw new Exception("Неверный логин или пароль");
+    }
+
+    $user = $result->fetch_assoc();
+    $stmt->close();
+
+    echo json_encode([
+        'success' => true,
+        'user' => [
+            'id' => $user['id'],
+            'login' => $user['login'],
+            'email' => $user['email'],
+            'role' => $user['role']
+        ]
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(401);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
+
+$db->close();
+?>
+
+++++php/get_requests.php+++++
+<?php
+// Настройка CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: GET, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Max-Age: 86400'); // кэш на 24 часа
+
+// Обработка preflight запроса
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit();
+}
+
+// Установка типа контента
+header('Content-Type: application/json; charset=utf-8');
+
+require_once('db.php');
+
+try {
+    // Запрос для получения заявок с информацией о марке и модели автомобиля
+    $query = "SELECT 
+                a.*, 
+                cb.brand as car_brand,
+                cm.brand as car_model
+              FROM application a
+              LEFT JOIN car_brand cb ON a.car_brand_id = cb.id
+              LEFT JOIN car_model cm ON a.car_model_id = cm.id
+              ORDER BY a.date DESC, a.time DESC";
+
+    $result = $db->query($query);
+
+    if (!$result) {
+        throw new Exception("Ошибка при выполнении запроса: " . $db->error);
+    }
+
+    $requests = [];
+    while ($row = $result->fetch_assoc()) {
+        $requests[] = [
+            'id' => $row['id'],
+            'adress' => $row['adress'],
+            'contact_info' => $row['contact_info'],
+            'date' => $row['date'],
+            'time' => $row['time'],
+            'dv_series' => $row['dv_series'],
+            'dv_number' => $row['dv_number'],
+            'dv_date' => $row['dv_date'],
+            'car_brand' => $row['car_brand'],
+            'car_model' => $row['car_model'],
+            'status' => $row['status'] ?? 'new'
+        ];
+    }
+
+    echo json_encode([
+        'success' => true,
+        'requests' => $requests
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
+
+$db->close();
+?>
+
+++++php/update_request_status.php+++++
+<?php
+// Настройка CORS
+header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Methods: POST, OPTIONS');
+header('Access-Control-Allow-Headers: Content-Type');
+header('Access-Control-Max-Age: 86400'); // кэш на 24 часа
+
+// Обработка preflight запроса
+if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
+    header('HTTP/1.1 200 OK');
+    exit();
+}
+
+// Установка типа контента
+header('Content-Type: application/json; charset=utf-8');
+
+require_once('db.php');
+
+try {
+    // Получение данных из POST запроса
+    $requestId = isset($_POST['request_id']) ? (int)$_POST['request_id'] : 0;
+    $status = $_POST['status'] ?? '';
+
+    // Проверка входных данных
+    if ($requestId <= 0) {
+        throw new Exception("Некорректный ID заявки");
+    }
+
+    if (!in_array($status, ['new', 'approved', 'completed', 'rejected'])) {
+        throw new Exception("Некорректный статус");
+    }
+
+    // Подготовка запроса
+    $query = "UPDATE application SET status = ? WHERE id = ?";
+    $stmt = $db->prepare($query);
+    
+    if (!$stmt) {
+        throw new Exception("Ошибка при подготовке запроса: " . $db->error);
+    }
+
+    $stmt->bind_param("si", $status, $requestId);
+
+    if (!$stmt->execute()) {
+        throw new Exception("Ошибка при выполнении запроса: " . $stmt->error);
+    }
+
+    if ($stmt->affected_rows === 0) {
+        throw new Exception("Заявка не найдена");
+    }
+
+    $stmt->close();
+
+    echo json_encode([
+        'success' => true,
+        'message' => 'Статус заявки успешно обновлен'
+    ]);
+
+} catch (Exception $e) {
+    http_response_code(500);
+    echo json_encode([
+        'success' => false,
+        'error' => $e->getMessage()
+    ]);
+}
+
+$db->close();
+?>
+
+++++src/components/AdminPanel.jsx+++++
+import React, { useState, useEffect } from 'react';
+import { fetchRequests, updateRequestStatus } from '../api';
+import './AdminPanel.css';
+
+const STATUS_LABELS = {
+    'new': 'Новая',
+    'approved': 'Одобрено',
+    'completed': 'Выполнено',
+    'rejected': 'Отклонено'
+};
+
+const STATUS_COLORS = {
+    'new': '#ffc107',
+    'approved': '#28a745',
+    'completed': '#17a2b8',
+    'rejected': '#dc3545'
+};
+
+const AdminPanel = () => {
+    const [requests, setRequests] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const [statusUpdating, setStatusUpdating] = useState(null);
+
+    useEffect(() => {
+        loadRequests();
+    }, []);
+
+    const loadRequests = async () => {
+        try {
+            setLoading(true);
+            const data = await fetchRequests();
+            setRequests(data);
+            setError(null);
+        } catch (err) {
+            setError(err.message);
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    const handleStatusChange = async (requestId, newStatus) => {
+        try {
+            setStatusUpdating(requestId);
+            await updateRequestStatus(requestId, newStatus);
+            // Обновляем статус в локальном состоянии
+            setRequests(requests.map(request => 
+                request.id === requestId 
+                    ? { ...request, status: newStatus }
+                    : request
+            ));
+        } catch (error) {
+            alert(error.message);
+        } finally {
+            setStatusUpdating(null);
+        }
+    };
+
+    const StatusSelect = ({ request }) => (
+        <select
+            value={request.status}
+            onChange={(e) => handleStatusChange(request.id, e.target.value)}
+            disabled={statusUpdating === request.id}
+            style={{ backgroundColor: STATUS_COLORS[request.status] }}
+            className="status-select"
+        >
+            {Object.entries(STATUS_LABELS).map(([value, label]) => (
+                <option key={value} value={value}>{label}</option>
+            ))}
+        </select>
+    );
+
+    if (loading) {
+        return <div className="loading">Загрузка заявок...</div>;
+    }
+
+    if (error) {
+        return <div className="error">Ошибка: {error}</div>;
+    }
+
+    return (
+        <div className="admin-panel-container">
+            <h2>Панель администратора</h2>
+            <div className="status-legend">
+                <h3>Статусы заявок:</h3>
+                <div className="status-items">
+                    {Object.entries(STATUS_LABELS).map(([status, label]) => (
+                        <div 
+                            key={status} 
+                            className="status-item"
+                            style={{ backgroundColor: STATUS_COLORS[status] }}
+                        >
+                            {label}
+                        </div>
+                    ))}
+                </div>
+            </div>
+            {requests.length === 0 ? (
+                <p className="no-requests">Заявок пока нет</p>
+            ) : (
+                <div className="table-container">
+                    <table className="admin-table">
+                        <thead>
+                            <tr>
+                                <th>№</th>
+                                <th>Статус</th>
+                                <th>Адрес</th>
+                                <th>Контактная информация</th>
+                                <th>Дата</th>
+                                <th>Время</th>
+                                <th>Серия ВУ</th>
+                                <th>Номер ВУ</th>
+                                <th>Дата ВУ</th>
+                                <th>Марка авто</th>
+                                <th>Модель авто</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {requests.map((request) => (
+                                <tr key={request.id}>
+                                    <td>{request.id}</td>
+                                    <td>
+                                        <StatusSelect request={request} />
+                                    </td>
+                                    <td>{request.adress}</td>
+                                    <td>{request.contact_info}</td>
+                                    <td>{new Date(request.date).toLocaleDateString()}</td>
+                                    <td>{request.time}</td>
+                                    <td>{request.dv_series}</td>
+                                    <td>{request.dv_number}</td>
+                                    <td>{new Date(request.dv_date).toLocaleDateString()}</td>
+                                    <td>{request.car_brand}</td>
+                                    <td>{request.car_model}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            )}
+        </div>
+    );
+};
+
+export default AdminPanel;
+
+++++src/components/AdminPanel.css+++++
+.admin-panel-container {
+    padding: 2rem;
+    max-width: 100%;
+    margin: 0 auto;
+}
+
+.admin-panel-container h2 {
+    text-align: center;
+    color: #333;
+    margin-bottom: 2rem;
+}
+
+.status-legend {
+    background: white;
+    padding: 1.5rem;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-bottom: 2rem;
+}
+
+.status-legend h3 {
+    margin-bottom: 1rem;
+    color: #333;
+    font-size: 1.1rem;
+}
+
+.status-items {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+}
+
+.status-item {
+    padding: 0.5rem 1rem;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    font-size: 0.9rem;
+}
+
+.table-container {
+    overflow-x: auto;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1200px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+}
+
+.admin-table th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+    color: #333;
+    white-space: nowrap;
+}
+
+.admin-table tr:hover {
+    background-color: #f8f9fa;
+}
+
+.status-select {
+    padding: 0.5rem;
+    border: none;
+    border-radius: 4px;
+    color: white;
+    font-weight: 500;
+    cursor: pointer;
+    width: 120px;
+}
+
+.status-select option {
+    background-color: white;
+    color: #333;
+}
+
+.status-select:disabled {
+    opacity: 0.7;
+    cursor: not-allowed;
+}
+
+.loading {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    font-size: 1.1rem;
+}
+
+.error {
+    text-align: center;
+    padding: 2rem;
+    color: #dc3545;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-requests {
+    text-align: center;
+    padding: 2rem;
+    color: #666;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Адаптивность для маленьких экранов */
+@media (max-width: 768px) {
+    .admin-panel-container {
+        padding: 1rem;
+    }
+
+    .status-legend {
+        padding: 1rem;
+    }
+
+    .table-container {
+        margin: 0 -1rem;
+        border-radius: 0;
+    }
+}
+
+++++src/App.jsx+++++
+import { useState } from 'react'
+import RegistrationForm from './components/RegistrationForm'
+import LoginForm from './components/LoginForm'
+import ViewRequests from './components/ViewRequests'
+import CreateRequest from './components/CreateRequest'
+import AdminPanel from './components/AdminPanel'
+import './App.css'
+
+// Константы для роутинга
+const ROUTES = {
+  ADMIN_PANEL: 'ADMIN_PANEL',
+  REGISTRATION: 'REGISTRATION',
+  LOGIN: 'LOGIN',
+  CREATE_REQUEST: 'CREATE_REQUEST',
+  VIEW_REQUESTS: 'VIEW_REQUESTS'
+}
+
+function App() {
+  // Стейт для роутинга и аутентификации
+  const [currentRoute, setCurrentRoute] = useState(ROUTES.LOGIN)
+  const [isAuthenticated, setIsAuthenticated] = useState(false)
+  const [userData, setUserData] = useState(null)
+
+  // Обработчик успешного входа
+  const handleLoginSuccess = (user) => {
+    setIsAuthenticated(true)
+    setUserData(user)
+    setCurrentRoute(ROUTES.VIEW_REQUESTS) // Редирект на страницу заявок
+  }
+
+  // Обработчик выхода
+  const handleLogout = () => {
+    setIsAuthenticated(false)
+    setUserData(null)
+    setCurrentRoute(ROUTES.LOGIN)
+  }
+
+  // Функция для рендеринга компонента в зависимости от роута
+  const renderComponent = () => {
+    switch (currentRoute) {
+      case ROUTES.REGISTRATION:
+        return <RegistrationForm onLoginSuccess={handleLoginSuccess} />
+      case ROUTES.LOGIN:
+        return <LoginForm onLoginSuccess={handleLoginSuccess} />
+      case ROUTES.ADMIN_PANEL:
+        return <AdminPanel />
+      case ROUTES.CREATE_REQUEST:
+        return <CreateRequest />
+      case ROUTES.VIEW_REQUESTS:
+        return <ViewRequests />
+      default:
+        return <LoginForm onLoginSuccess={handleLoginSuccess} />
+    }
+  }
+
+  return (
+    <div className="app-container">
+      {/* Навигационное меню */}
+      <nav className="navigation">
+        {!isAuthenticated ? (
+          <>
+            <button onClick={() => setCurrentRoute(ROUTES.LOGIN)}>Вход</button>
+            <button onClick={() => setCurrentRoute(ROUTES.REGISTRATION)}>Регистрация</button>
+          </>
+        ) : (
+          <>
+            {userData?.role === 'admin' && (
+              <button onClick={() => setCurrentRoute(ROUTES.ADMIN_PANEL)}>Админ панель</button>
+            )}
+            <button onClick={() => setCurrentRoute(ROUTES.CREATE_REQUEST)}>Создать заявку</button>
+            <button onClick={() => setCurrentRoute(ROUTES.VIEW_REQUESTS)}>Просмотр заявок</button>
+            <button onClick={handleLogout}>Выйти</button>
+          </>
+        )}
+      </nav>
+
+      {/* Контейнер для контента */}
+      <main className="content">
+        {renderComponent()}
+      </main>
+    </div>
+  )
+}
+
+export default App 

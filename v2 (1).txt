@@ -1,0 +1,1150 @@
++++++index.php+++++
+
+<?php require_once 'includes/config.php'; ?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Главная</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?></h1>
+        <nav>
+            <?php if (isLoggedIn()): ?>
+                <?php if (isAdmin()): ?>
+                    <a href="admin.php">Панель администратора</a>
+                <?php else: ?>
+                    <a href="orders.php">Мои заявки</a>
+                    <a href="new_order.php">Новая заявка</a>
+                <?php endif; ?>
+                <a href="logout.php">Выйти</a>
+            <?php else: ?>
+                <a href="login.php">Войти</a>
+                <a href="register.php">Регистрация</a>
+            <?php endif; ?>
+        </nav>
+    </header>
+
+    <main>
+        <h1>Грузоперевозки по всей России</h1>
+        
+        <div class="features">
+            <div class="feature">
+                <h2>Широкий спектр услуг</h2>
+                <p>Мы осуществляем перевозку любых типов грузов: от хрупких предметов до крупногабаритной мебели. Специальные условия для скоропортящихся продуктов и опасных грузов.</p>
+            </div>
+            
+            <div class="feature">
+                <h2>Надежность и безопасность</h2>
+                <p>Каждый груз застрахован, а его перемещение отслеживается в режиме реального времени. Мы гарантируем сохранность и своевременную доставку вашего груза.</p>
+            </div>
+            
+            <div class="feature">
+                <h2>Удобное оформление</h2>
+                <p>Создайте заявку онлайн всего за несколько минут. Укажите параметры груза, адреса доставки, и мы рассчитаем оптимальный маршрут и стоимость.</p>
+            </div>
+        </div>
+        
+        <?php if (!isLoggedIn()): ?>
+            <div class="action-buttons">
+                <a href="register.php" class="button">Начать работу</a>
+                <a href="login.php" class="button">Войти в систему</a>
+            </div>
+        <?php else: ?>
+            <div class="action-buttons">
+                <a href="new_order.php" class="button">Создать заявку</a>
+                <a href="orders.php" class="button">Мои заявки</a>
+            </div>
+        <?php endif; ?>
+        
+        <div class="contact-info">
+            <h2>Остались вопросы?</h2>
+            <p>Свяжитесь с нами любым удобным способом:</p>
+            <ul>
+                <li>Телефон: 8 (800) 123-45-67</li>
+                <li>Email: info@gruzovozoff.ru</li>
+                <li>Адрес: г. Москва, ул. Транспортная, д. 1</li>
+            </ul>
+        </div>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+
++++++login.php+++++
+
+<?php
+require_once 'includes/config.php';
+
+if (isLoggedIn()) {
+    redirect(isAdmin() ? 'admin.php' : 'orders.php');
+}
+
+$errors = [];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $login = trim($_POST['login'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+
+    if (empty($login) || empty($password)) {
+        $errors['general'] = 'Все поля обязательны для заполнения';
+    } else {
+        // Проверка администратора
+        if ($login === ADMIN_LOGIN && $password === ADMIN_PASSWORD) {
+            $_SESSION['user_id'] = 0;
+            $_SESSION['login'] = ADMIN_LOGIN;
+            $_SESSION['is_admin'] = true;
+            redirect('admin.php');
+        }
+
+        // Проверка обычного пользователя
+        $stmt = $pdo->prepare("SELECT id, login, password FROM users WHERE login = ?");
+        $stmt->execute([$login]);
+        $user = $stmt->fetch();
+
+        if ($user && password_verify($password, $user['password'])) {
+            $_SESSION['user_id'] = $user['id'];
+            $_SESSION['login'] = $user['login'];
+            $_SESSION['is_admin'] = false;
+            redirect('orders.php');
+        } else {
+            $errors['general'] = 'Неверный логин или пароль';
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Вход</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?></h1>
+        <nav>
+            <a href="index.php">Главная</a>
+            <a href="register.php">Регистрация</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Вход в систему</h2>
+        
+        <?php if (!empty($errors['general'])): ?>
+            <div class="error-message"><?= $errors['general'] ?></div>
+        <?php endif; ?>
+        
+        <form method="post">
+            <div class="form-group">
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+            </div>
+            
+            <div class="form-group">
+                <label for="password">Пароль:</label>
+                <input type="password" id="password" name="password" required>
+            </div>
+            
+            <button type="submit" class="button">Войти</button>
+        </form>
+        
+        <p>Нет аккаунта? <a href="register.php">Зарегистрируйтесь</a></p>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+
++++++register.php+++++
+
+<?php
+require_once 'includes/config.php';
+
+$errors = [];
+$success = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $login = trim($_POST['login'] ?? '');
+    $password = trim($_POST['password'] ?? '');
+    $full_name = trim($_POST['full_name'] ?? '');
+    $phone = formatPhoneNumber($_POST['phone']);
+    if (!validatePhone($phone)) {
+        $errors['phone'] = 'Введите 10 цифр номера после +7';
+    };
+    $email = trim($_POST['email'] ?? '');
+    
+    // Валидация
+    if (!validateLogin($login)) {
+        $errors['login'] = 'Логин должен содержать только кириллицу и быть не менее 6 символов';
+    }
+
+    if (!validatePassword($password)) {
+        $errors['password'] = 'Пароль должен быть не менее 6 символов';
+    }
+
+    if (!validateFullName($full_name)) {
+        $errors['full_name'] = 'ФИО должно содержать только кириллицу и пробелы';
+    }
+
+    if (!validatePhone($phone)) {
+        $errors['phone'] = 'Телефон должен быть в формате +7(XXX)-XXX-XX-XX';
+    }
+
+    if (!validateEmail($email)) {
+        $errors['email'] = 'Некорректный email';
+    }
+
+    if (empty($errors)) {
+        $hashed_password = password_hash($password, PASSWORD_DEFAULT);
+        $stmt = $pdo->prepare("INSERT INTO users (login, password, full_name, phone, email) VALUES (?, ?, ?, ?, ?)");
+        if ($stmt->execute([$login, $hashed_password, $full_name, $phone, $email])) {
+            $success = true;
+        } else {
+            $errors['general'] = 'Ошибка при регистрации. Попробуйте позже.';
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Регистрация</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?></h1>
+        <nav>
+            <a href="index.php">Главная</a>
+            <a href="login.php">Войти</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Регистрация</h2>
+        
+        <?php if (!empty($errors['general'])): ?>
+            <div class="error-message"><?= $errors['general'] ?></div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="success-message">Регистрация прошла успешно! <a href="login.php">Войдите</a> в систему.</div>
+        <?php else: ?>
+            <form method="post">
+                <div class="form-group">
+                    <label for="name">Имя:</label>
+                    <input type="text" id="name" name="name" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="email">Email:</label>
+                    <input type="email" id="email" name="email" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="password">Пароль:</label>
+                    <input type="password" id="password" name="password" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="confirm_password">Подтвердите пароль:</label>
+                    <input type="password" id="confirm_password" name="confirm_password" required>
+                </div>
+                
+                <button type="submit" class="button">Зарегистрироваться</button>
+            </form>
+            
+            <p>Уже есть аккаунт? <a href="login.php">Войдите</a></p>
+        <?php endif; ?>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+
+    <script src="assets/js/phone-input.js"></script>
+</body>
+</html>
+
++++++logout.php+++++
+
+<?php
+require_once 'includes/config.php';
+session_destroy();
+redirect('index.php');
+
++++++assets/css/style.css+++++
+
+/* Общие стили */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Arial', sans-serif;
+}
+
+body {
+    line-height: 1.6;
+    color: #333;
+    background-color: #fff;
+    padding: 0;
+    margin: 0;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+header {
+    background-color: #000;
+    color: white;
+    padding: 1rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+}
+
+header h1 {
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+nav a {
+    color: white;
+    text-decoration: none;
+    margin-left: 1rem;
+    padding: 0.5rem;
+    border-radius: 4px;
+    transition: background-color 0.3s;
+}
+
+nav a:hover {
+    background-color: #333;
+}
+
+main {
+    padding: 2rem;
+    flex: 1;
+}
+
+footer {
+    background-color: #000;
+    color: white;
+    text-align: center;
+    padding: 1rem;
+    margin-top: auto;
+}
+
+/* Кнопки */
+.button {
+    display: inline-block;
+    background-color: #000;
+    color: white;
+    padding: 0.5rem 1rem;
+    border: none;
+    border-radius: 12px;
+    text-decoration: none;
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+
+.button:hover {
+    background-color: #333;
+}
+
+.button.secondary {
+    background-color: #666;
+}
+
+.button.secondary:hover {
+    background-color: #888;
+}
+
+.button.small {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.9rem;
+}
+
+/* Формы */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 600;
+    color: #000;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+    width: 100%;
+    padding: 0.75rem 0;
+    background: transparent;
+    border: none;
+    border-bottom: 1px solid #666;
+    color: #666;
+    font-size: 1rem;
+    transition: all 0.3s ease;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+    outline: none;
+    border-bottom-color: #000;
+    color: #000;
+}
+
+.form-group textarea {
+    min-height: 100px;
+    resize: vertical;
+    padding: 0.75rem;
+    border: 1px solid #666;
+    border-radius: 8px;
+}
+
+.form-group textarea:focus {
+    border-color: #000;
+}
+
+.form-group.has-error input,
+.form-group.has-error select,
+.form-group.has-error textarea {
+    border-color: #e74c3c;
+    color: #e74c3c;
+}
+
+.error {
+    color: #e74c3c;
+    font-size: 0.9rem;
+    margin-top: 0.3rem;
+    display: block;
+}
+
+.error-message {
+    color: #842029;
+    background-color: #f8d7da;
+    border: 1px solid #f5c2c7;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+.success-message {
+    color: #0f5132;
+    background: none;
+    border: 1px solid #0f5132;
+    padding: 1rem;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+}
+
+/* Таблица заявок */
+.orders-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    overflow: hidden;
+    table-layout: fixed;
+}
+
+.orders-table th,
+.orders-table td {
+    padding: 1rem;
+    text-align: left;
+    border-bottom: 1px solid #eee;
+    vertical-align: top;
+    word-wrap: break-word;
+}
+
+.orders-table th {
+    background-color: #000;
+    color: white;
+    font-weight: 600;
+}
+
+.orders-table tr:hover {
+    background-color: #f8f8f8;
+}
+
+.orders-table tr:last-child td {
+    border-bottom: none;
+}
+
+/* Задаем ширину колонок */
+.orders-table th:nth-child(1), /* № */
+.orders-table td:nth-child(1) {
+    width: 5%;
+}
+
+.orders-table th:nth-child(2), /* Дата */
+.orders-table td:nth-child(2) {
+    width: 15%;
+}
+
+.orders-table th:nth-child(3), /* Маршрут */
+.orders-table td:nth-child(3) {
+    width: 25%;
+}
+
+.orders-table th:nth-child(4), /* Груз */
+.orders-table td:nth-child(4) {
+    width: 20%;
+}
+
+.orders-table th:nth-child(5), /* Статус */
+.orders-table td:nth-child(5) {
+    width: 15%;
+}
+
+.orders-table th:nth-child(6), /* Действия */
+.orders-table td:nth-child(6) {
+    width: 20%;
+}
+
+.orders-table td > div {
+    margin-bottom: 0.5rem;
+}
+
+.orders-table td > div:last-child {
+    margin-bottom: 0;
+}
+
+/* Форма отзыва в таблице */
+.orders-table .feedback-form {
+    margin-top: 1rem;
+}
+
+.orders-table .feedback-form textarea {
+    width: 100%;
+    min-height: 80px;
+    margin-bottom: 0.5rem;
+}
+
+.orders-table .feedback {
+    background-color: #f8f8f8;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+/* Форма заявки */
+.order-form {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    margin-top: 1.5rem;
+}
+
+.order-form h2 {
+    color: #000;
+    margin-bottom: 2rem;
+    text-align: center;
+}
+
+.order-form .button {
+    width: 100%;
+    margin-top: 1rem;
+}
+
+@media (min-width: 768px) {
+    .order-form {
+        max-width: 800px;
+        margin: 0 auto;
+    }
+    
+    .order-form .button {
+        width: auto;
+        min-width: 200px;
+        display: block;
+        margin: 2rem auto 0;
+    }
+}
+
+/* Стили главной страницы */
+main h1 {
+    text-align: center;
+    margin-bottom: 2rem;
+    font-size: 2.5rem;
+    color: #000;
+}
+
+.features {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+.feature {
+    padding: 2rem;
+    background: #fff;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.feature h2 {
+    color: #000;
+    margin-bottom: 1rem;
+    font-size: 1.5rem;
+}
+
+.feature p {
+    color: #666;
+    line-height: 1.6;
+}
+
+.action-buttons {
+    text-align: center;
+    margin: 3rem 0;
+}
+
+.action-buttons .button {
+    margin: 0 1rem;
+}
+
+.contact-info {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.contact-info h2 {
+    color: #000;
+    margin-bottom: 1rem;
+}
+
+.contact-info p {
+    color: #666;
+    margin-bottom: 1rem;
+}
+
+.contact-info ul {
+    list-style: none;
+    padding: 0;
+}
+
+.contact-info li {
+    color: #666;
+    margin-bottom: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    main h1 {
+        font-size: 2rem;
+        padding: 0 1rem;
+    }
+
+    .features {
+        grid-template-columns: 1fr;
+        padding: 0 1rem;
+    }
+
+    .action-buttons .button {
+        display: block;
+        margin: 1rem auto;
+        max-width: 300px;
+    }
+
+    .contact-info {
+        margin: 0 1rem;
+    }
+}
+
++++++admin.php+++++
+
+<?php
+require_once 'includes/config.php';
+
+if (!isAdmin()) {
+    redirect('login.php');
+}
+
+// Обработка изменения статуса заявки
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['order_id']) && isset($_POST['status'])) {
+    $order_id = (int)$_POST['order_id'];
+    $status = $_POST['status'];
+    
+    $stmt = $pdo->prepare("UPDATE orders SET status = ? WHERE id = ?");
+    $stmt->execute([$status, $order_id]);
+}
+
+// Получение всех заявок
+$stmt = $pdo->query("SELECT o.*, u.full_name, u.phone, u.email FROM orders o JOIN users u ON o.user_id = u.id ORDER BY o.created_at DESC");
+$orders = $stmt->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Панель администратора</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?> - Панель администратора</h1>
+        <nav>
+            <a href="index.php">Главная</a>
+            <a href="logout.php">Выйти</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Панель администратора</h2>
+        
+        <?php if (isset($error)): ?>
+            <div class="error-message"><?= $error ?></div>
+        <?php endif; ?>
+        
+        <?php if (isset($success)): ?>
+            <div class="success-message"><?= $success ?></div>
+        <?php endif; ?>
+        
+        <table class="orders-table">
+            <?php if (empty($orders)): ?>
+                <p>Нет заявок</p>
+            <?php else: ?>
+                <div class="orders-list">
+                    <?php foreach ($orders as $order): ?>
+                        <div class="order-card">
+                            <h3>Заявка #<?= $order['id'] ?></h3>
+                            <p><strong>Клиент:</strong> <?= $order['full_name'] ?></p>
+                            <p><strong>Контакты:</strong> <?= $order['phone'] ?>, <?= $order['email'] ?></p>
+                            <p><strong>Дата перевозки:</strong> <?= date('d.m.Y H:i', strtotime($order['order_date'])) ?></p>
+                            <p><strong>Вес груза:</strong> <?= $order['weight'] ?> кг</p>
+                            <p><strong>Габариты:</strong> <?= $order['dimensions'] ?></p>
+                            <p><strong>Тип груза:</strong> <?= $order['cargo_type'] ?></p>
+                            <p><strong>Откуда:</strong> <?= $order['from_address'] ?></p>
+                            <p><strong>Куда:</strong> <?= $order['to_address'] ?></p>
+                            
+                            <form method="post" class="status-form">
+                                <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                <div class="form-group">
+                                    <label for="status-<?= $order['id'] ?>">Статус:</label>
+                                    <select id="status-<?= $order['id'] ?>" name="status" onchange="this.form.submit()">
+                                        <option value="Новая" <?= $order['status'] == 'Новая' ? 'selected' : '' ?>>Новая</option>
+                                        <option value="В работе" <?= $order['status'] == 'В работе' ? 'selected' : '' ?>>В работе</option>
+                                        <option value="Отменена" <?= $order['status'] == 'Отменена' ? 'selected' : '' ?>>Отменена</option>
+                                    </select>
+                                </div>
+                            </form>
+                            
+                            <?php if (!empty($order['feedback'])): ?>
+                                <div class="feedback">
+                                    <strong>Отзыв клиента:</strong>
+                                    <p><?= htmlspecialchars($order['feedback']) ?></p>
+                                </div>
+                            <?php endif; ?>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+        </table>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+
++++++new_order.php+++++
+
+<?php
+require_once 'includes/config.php';
+
+if (!isLoggedIn() || isAdmin()) {
+    redirect(isAdmin() ? 'admin.php' : 'login.php');
+}
+
+$errors = [];
+$success = false;
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $order_date = trim($_POST['order_date'] ?? '');
+    $weight = trim($_POST['weight'] ?? '');
+    $dimensions = trim($_POST['dimensions'] ?? '');
+    $cargo_type = trim($_POST['cargo_type'] ?? '');
+    $from_address = trim($_POST['from_address'] ?? '');
+    $to_address = trim($_POST['to_address'] ?? '');
+    
+    // Валидация
+    if (empty($order_date)) {
+        $errors['order_date'] = 'Укажите дату перевозки';
+    }
+    
+    if (!is_numeric($weight) || $weight <= 0) {
+        $errors['weight'] = 'Укажите корректный вес';
+    }
+    
+    if (empty($dimensions)) {
+        $errors['dimensions'] = 'Укажите габариты груза';
+    }
+    
+    if (empty($cargo_type)) {
+        $errors['cargo_type'] = 'Выберите тип груза';
+    }
+    
+    if (empty($from_address)) {
+        $errors['from_address'] = 'Укажите адрес отправления';
+    }
+    
+    if (empty($to_address)) {
+        $errors['to_address'] = 'Укажите адрес доставки';
+    }
+    
+    if (empty($errors)) {
+        $stmt = $pdo->prepare("INSERT INTO orders (user_id, order_date, weight, dimensions, cargo_type, from_address, to_address) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        if ($stmt->execute([$_SESSION['user_id'], $order_date, $weight, $dimensions, $cargo_type, $from_address, $to_address])) {
+            $success = true;
+        } else {
+            $errors['general'] = 'Ошибка при создании заявки. Попробуйте позже.';
+        }
+    }
+}
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Новая заявка</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?></h1>
+        <nav>
+            <a href="index.php">Главная</a>
+            <a href="orders.php">Мои заявки</a>
+            <a href="logout.php">Выйти</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Новая заявка</h2>
+        
+        <?php if (!empty($errors['general'])): ?>
+            <div class="error-message"><?= $errors['general'] ?></div>
+        <?php endif; ?>
+        
+        <?php if ($success): ?>
+            <div class="success-message">
+                Заявка успешно создана! <a href="orders.php">Перейти к моим заявкам</a>
+            </div>
+        <?php else: ?>
+            <form method="post" class="order-form">
+                <div class="form-group <?= isset($errors['order_date']) ? 'has-error' : '' ?>">
+                    <label for="order_date">Дата перевозки:</label>
+                    <input type="datetime-local" id="order_date" name="order_date" value="<?= htmlspecialchars($_POST['order_date'] ?? '') ?>" required>
+                    <?php if (isset($errors['order_date'])): ?>
+                        <span class="error"><?= $errors['order_date'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errors['weight']) ? 'has-error' : '' ?>">
+                    <label for="weight">Вес груза (кг):</label>
+                    <input type="number" id="weight" name="weight" step="0.1" value="<?= htmlspecialchars($_POST['weight'] ?? '') ?>" required>
+                    <?php if (isset($errors['weight'])): ?>
+                        <span class="error"><?= $errors['weight'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errors['dimensions']) ? 'has-error' : '' ?>">
+                    <label for="dimensions">Габариты (ДхШхВ):</label>
+                    <input type="text" id="dimensions" name="dimensions" value="<?= htmlspecialchars($_POST['dimensions'] ?? '') ?>" required>
+                    <?php if (isset($errors['dimensions'])): ?>
+                        <span class="error"><?= $errors['dimensions'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errors['cargo_type']) ? 'has-error' : '' ?>">
+                    <label for="cargo_type">Тип груза:</label>
+                    <select id="cargo_type" name="cargo_type" required>
+                        <option value="">Выберите тип груза</option>
+                        <option value="бытовая техника" <?= isset($_POST['cargo_type']) && $_POST['cargo_type'] == 'бытовая техника' ? 'selected' : '' ?>>Бытовая техника</option>
+                        <option value="мебель" <?= isset($_POST['cargo_type']) && $_POST['cargo_type'] == 'мебель' ? 'selected' : '' ?>>Мебель</option>
+                        <option value="мусор" <?= isset($_POST['cargo_type']) && $_POST['cargo_type'] == 'мусор' ? 'selected' : '' ?>>Мусор</option>
+                    </select>
+                    <?php if (isset($errors['cargo_type'])): ?>
+                        <span class="error"><?= $errors['cargo_type'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errors['from_address']) ? 'has-error' : '' ?>">
+                    <label for="from_address">Адрес отправления:</label>
+                    <textarea id="from_address" name="from_address" rows="2" required><?= htmlspecialchars($_POST['from_address'] ?? '') ?></textarea>
+                    <?php if (isset($errors['from_address'])): ?>
+                        <span class="error"><?= $errors['from_address'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <div class="form-group <?= isset($errors['to_address']) ? 'has-error' : '' ?>">
+                    <label for="to_address">Адрес доставки:</label>
+                    <textarea id="to_address" name="to_address" rows="2" required><?= htmlspecialchars($_POST['to_address'] ?? '') ?></textarea>
+                    <?php if (isset($errors['to_address'])): ?>
+                        <span class="error"><?= $errors['to_address'] ?></span>
+                    <?php endif; ?>
+                </div>
+
+                <button type="submit" class="button">Отправить заявку</button>
+            </form>
+        <?php endif; ?>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+</body>
+</html>
+
++++++orders.php+++++
+
+<?php
+require_once 'includes/config.php';
+
+if (!isLoggedIn() || isAdmin()) {
+    redirect(isAdmin() ? 'admin.php' : 'login.php');
+}
+
+// Обработка отправки отзыва
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['feedback'])) {
+    $order_id = (int)($_POST['order_id'] ?? 0);
+    $feedback = trim($_POST['feedback'] ?? '');
+    
+    if ($order_id > 0 && !empty($feedback)) {
+        $stmt = $pdo->prepare("UPDATE orders SET feedback = ? WHERE id = ? AND user_id = ?");
+        $stmt->execute([$feedback, $order_id, $_SESSION['user_id']]);
+    }
+}
+
+// Получение заявок пользователя
+$stmt = $pdo->prepare("SELECT * FROM orders WHERE user_id = ? ORDER BY created_at DESC");
+$stmt->execute([$_SESSION['user_id']]);
+$orders = $stmt->fetchAll();
+?>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title><?= APP_NAME ?> - Мои заявки</title>
+    <link rel="stylesheet" href="assets/css/style.css">
+</head>
+<body>
+    <header>
+        <h1><?= APP_NAME ?></h1>
+        <nav>
+            <a href="index.php">Главная</a>
+            <a href="new_order.php">Новая заявка</a>
+            <a href="logout.php">Выйти</a>
+        </nav>
+    </header>
+
+    <main>
+        <h2>Мои заявки</h2>
+        
+        <?php if (empty($orders)): ?>
+            <p>У вас пока нет заявок. <a href="new_order.php">Создайте первую</a></p>
+        <?php else: ?>
+            <table class="orders-table">
+                <thead>
+                    <tr>
+                        <th>№</th>
+                        <th>Дата перевозки</th>
+                        <th>Маршрут</th>
+                        <th>Груз</th>
+                        <th>Статус</th>
+                        <th>Действия</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($orders as $order): 
+                        $statusClass = '';
+                        switch ($order['status']) {
+                            case 'Новая':
+                                $statusClass = 'status-new';
+                                break;
+                            case 'В работе':
+                                $statusClass = 'status-in-progress';
+                                break;
+                            case 'Завершена':
+                                $statusClass = 'status-completed';
+                                break;
+                            case 'Отменена':
+                                $statusClass = 'status-cancelled';
+                                break;
+                        }
+                    ?>
+                        <tr>
+                            <td>#<?= $order['id'] ?></td>
+                            <td><?= date('d.m.Y H:i', strtotime($order['order_date'])) ?></td>
+                            <td>
+                                <div><strong>Откуда:</strong> <?= $order['from_address'] ?></div>
+                                <div><strong>Куда:</strong> <?= $order['to_address'] ?></div>
+                            </td>
+                            <td>
+                                <div><strong>Тип:</strong> <?= $order['cargo_type'] ?></div>
+                                <div><strong>Вес:</strong> <?= $order['weight'] ?> кг</div>
+                                <div><strong>Габариты:</strong> <?= $order['dimensions'] ?></div>
+                            </td>
+                            <td><span class="status <?= $statusClass ?>"><?= $order['status'] ?></span></td>
+                            <td>
+                                <?php if (!empty($order['feedback'])): ?>
+                                    <div class="feedback">
+                                        <strong>Ваш отзыв:</strong>
+                                        <p><?= htmlspecialchars($order['feedback']) ?></p>
+                                    </div>
+                                <?php elseif ($order['status'] == 'В работе' || $order['status'] == 'Отменена'): ?>
+                                    <button class="button small" onclick="showFeedbackForm(<?= $order['id'] ?>)">Оставить отзыв</button>
+                                    <form method="post" class="feedback-form" id="feedback-form-<?= $order['id'] ?>" style="display: none;">
+                                        <input type="hidden" name="order_id" value="<?= $order['id'] ?>">
+                                        <div class="form-group">
+                                            <textarea name="feedback" rows="3" required placeholder="Ваш отзыв"></textarea>
+                                        </div>
+                                        <button type="submit" class="button small">Отправить</button>
+                                    </form>
+                                <?php endif; ?>
+                            </td>
+                        </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+        <?php endif; ?>
+    </main>
+
+    <footer>
+        <p>&copy; <?= date('Y') ?> <?= APP_NAME ?>. Все права защищены.</p>
+    </footer>
+
+    <script>
+    function showFeedbackForm(orderId) {
+        const form = document.getElementById(`feedback-form-${orderId}`);
+        const button = form.previousElementSibling;
+        form.style.display = 'block';
+        button.style.display = 'none';
+    }
+    </script>
+</body>
+</html>
+
++++++includes/auth.php+++++
+
+<?php
+require_once 'config.php';
+
+if (!isLoggedIn() && basename($_SERVER['PHP_SELF']) != 'login.php' && basename($_SERVER['PHP_SELF']) != 'register.php') {
+    redirect('login.php');
+}
+
+if (isAdmin() && basename($_SERVER['PHP_SELF']) == 'new_order.php' || basename($_SERVER['PHP_SELF']) == 'orders.php') {
+    redirect('admin.php');
+}
+
+if (!isAdmin() && basename($_SERVER['PHP_SELF']) == 'admin.php') {
+    redirect('orders.php');
+}
+
++++++includes/config.php+++++
+
+<?php
+session_start();
+require_once 'db.php';
+require_once 'functions.php';
+
+// Настройки приложения
+define('APP_NAME', 'Грузовозофф');
+define('ADMIN_LOGIN', 'admin');
+define('ADMIN_PASSWORD', 'gruzovik2024');
+
++++++includes/db.php+++++
+
+<?php
+$host = 'localhost';
+$dbname = 'v-2';
+$username = 'root';
+$password = '';
+
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$dbname;charset=utf8", $username, $password);
+    $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+} catch (PDOException $e) {
+    die("Ошибка подключения к базе данных: " . $e->getMessage());
+}
+
++++++includes/functions.php+++++
+
+<?php
+function isLoggedIn() {
+    return isset($_SESSION['user_id']);
+}
+
+function isAdmin() {
+    return isset($_SESSION['is_admin']) && $_SESSION['is_admin'];
+}
+
+function validatePhone($phone) {
+    // Проверяем полный формат
+    if (!preg_match('/^\+7\(\d{3}\)\d{3}-\d{2}-\d{2}$/', $phone)) {
+        return false;
+    }
+    
+    // Проверяем что цифр ровно 11 (7 + 10 цифр номера)
+    return strlen(preg_replace('/\D/', '', $phone)) === 11;
+}
+
+function formatPhoneNumber($phone) {
+    $digits = preg_replace('/\D/', '', $phone);
+    if (strlen($digits) === 11 && $digits[0] === '7') {
+        return sprintf('+7(%s)%s-%s-%s', 
+                      substr($digits, 1, 3),
+                      substr($digits, 4, 3),
+                      substr($digits, 7, 2),
+                      substr($digits, 9, 2));
+    }
+    return $phone;
+}
+
+function validateEmail($email) {
+    return filter_var($email, FILTER_VALIDATE_EMAIL);
+}
+
+function validateLogin($login) {
+    return preg_match('/^[а-яА-ЯёЁ]{6,}$/u', $login);
+}
+
+function validatePassword($password) {
+    return strlen($password) >= 6;
+}
+
+function validateFullName($name) {
+    return preg_match('/^[а-яА-ЯёЁ\s]+$/u', $name);
+}
+
+function redirect($url) {
+    header("Location: $url");
+    exit();
+} 
