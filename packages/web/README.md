@@ -1,54 +1,27 @@
-# React + TypeScript + Vite
+# Запуск проекта
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Для запуска проекта, убедитесь, что у вас установлена NodeJS версии 20.10.0.
+Так же на компьютере должны быть установлены программы gcc, make, python2, python3. (На линуксе всё это находиться в пакете build-essential)
 
-Currently, two official plugins are available:
+## Запуск сервера
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+Перейти в папку с сервером `cd packages/server`
+установить зависимости `npm i -ci`
+Запустить сервер `npm run start`
 
-## Expanding the ESLint configuration
+Теперь по адресу localhost:3000 доступен сервер
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Запуск сайта
 
-```js
-export default tseslint.config({
-  extends: [
-    // Remove ...tseslint.configs.recommended and replace with this
-    ...tseslint.configs.recommendedTypeChecked,
-    // Alternatively, use this for stricter rules
-    ...tseslint.configs.strictTypeChecked,
-    // Optionally, add this for stylistic rules
-    ...tseslint.configs.stylisticTypeChecked,
-  ],
-  languageOptions: {
-    // other options...
-    parserOptions: {
-      project: ['./tsconfig.node.json', './tsconfig.app.json'],
-      tsconfigRootDir: import.meta.dirname,
-    },
-  },
-})
-```
+Перейти в папку с сайтом `cd packages/web`
+Установить зависимости `npm i -ci`
+ЗАпустить режим разработки `npm run dev`
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+Теперь по адресу localhost:5173 доступен сайт
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
 
-export default tseslint.config({
-  plugins: {
-    // Add the react-x and react-dom plugins
-    'react-x': reactX,
-    'react-dom': reactDom,
-  },
-  rules: {
-    // other rules...
-    // Enable its recommended typescript rules
-    ...reactX.configs['recommended-typescript'].rules,
-    ...reactDom.configs.recommended.rules,
-  },
-})
-```
+## Создание администратора
+
+Т.К. проект использует SQLite то все данные в БД храняться на устройстве. Поэтому нужно создать пользвоателя с правами администратора вручную. 
+Например `curl -H "Content-Type: application/json" -d '{"login": "admin-user", "password": "super-password-1"}"'`
+Создаст администратора с логином admin-user и паролем super-password-1
